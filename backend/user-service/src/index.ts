@@ -18,7 +18,7 @@ const start = async () => {
     await connectRabbitMQ();
     await connectRedis();
     app.listen(port, () => {
-        console.log(`Server is running on port: ${port}`);
+        console.log(`User Service is running on port: ${port}`);
     });
 };
 
