@@ -1,6 +1,8 @@
+import { generateToken } from "../config/generateToken.js";
 import { publishToQueue } from "../config/rabbitmq.js";
 import { redisClient } from "../config/redis.js";
 import TryCatch from "../config/tryCatch.js";
+import User from "../model/User.js";
 
 export const loginUser = TryCatch(async (req, res) => {
     // Placeholder logic for user login
@@ -30,14 +32,52 @@ export const loginUser = TryCatch(async (req, res) => {
     
     const message  = {
         to: email,
-        subject: "Your OTP Code",
+        subject: "Verify your PING account",
         body: `Your OTP code is ${otp}. It is valid for 5 minutes.`,
     }
 
-    await publishToQueue("send-otp", JSON.stringify(message));
-
+    await publishToQueue("send-otp", message);
 
     res.status(200).json({
         message: "OTP has been sent to your email",
+    });
+});
+
+export const verifyOTP = TryCatch(async (req, res) => {
+    const { email, otp: enteredOTP } = req.body;
+
+    if(!email || !enteredOTP) {
+        return res.status(400).json({
+            message: "Email and OTP are required",
+        });
+        return;
+    }
+
+    const otpKey = `otp:${email}`;
+    const storedOTP = await redisClient.get(otpKey);
+
+    if (!storedOTP || storedOTP !== enteredOTP) {
+        return res.status(400).json({
+            message: "Invalid or expired OTP",
+        });
+        return;
+    }
+
+    // OTP is valid, proceed with login (placeholder logic)
+    await redisClient.del(otpKey); // Invalidate the OTP after successful verification
+
+    let user = await User.findOne({ email });
+    if (!user) {
+        const name = email.slice(0, email.indexOf('@'));
+        user = await User.create({ email, name });
+    }
+
+    const token = generateToken(user);
+    
+
+    res.status(200).json({
+        message: "Login successful",
+        user,
+        token,
     });
 });
