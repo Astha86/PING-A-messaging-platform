@@ -2,6 +2,7 @@ import { generateToken } from "../config/generateToken.js";
 import { publishToQueue } from "../config/rabbitmq.js";
 import { redisClient } from "../config/redis.js";
 import TryCatch from "../config/tryCatch.js";
+import type { AuthRequest } from "../middleware/isAuth.js";
 import User from "../model/User.js";
 
 export const loginUser = TryCatch(async (req, res) => {
@@ -77,6 +78,48 @@ export const verifyOTP = TryCatch(async (req, res) => {
 
     res.status(200).json({
         message: "Login successful",
+        user,
+        token,
+    });
+});
+
+export const getUserProfile = TryCatch(async (req: AuthRequest, res) => {
+    const user = req.user;
+
+    if (!user) {
+        return res.status(404).json({
+            message: "User not found",
+        });
+    }
+
+    res.status(200).json({
+        user,
+    });
+});
+
+export const updateUserName = TryCatch(async (req: AuthRequest, res) => {
+    const user = await User.findById(req.user?._id);
+    const { name } = req.body;
+
+    if (!user) {
+        return res.status(404).json({
+            message: "Please login to update profile",
+        });
+    }
+
+    if (!name || typeof name !== "string" || name.trim() === "") {
+        return res.status(400).json({
+            message: "Name is required and must be a non-empty string",
+        });
+    }
+
+    user.name = name.trim();
+    await user.save();
+
+    const token = generateToken(user);
+
+    res.status(200).json({
+        message: "Name updated successfully",
         user,
         token,
     });
