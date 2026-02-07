@@ -5,6 +5,7 @@ import TryCatch from "../config/tryCatch.js";
 import type { AuthRequest } from "../middleware/isAuth.js";
 import User from "../model/User.js";
 
+// send OTP to user's email for login
 export const loginUser = TryCatch(async (req, res) => {
     // Placeholder logic for user login
     const { email } = req.body;
@@ -44,6 +45,7 @@ export const loginUser = TryCatch(async (req, res) => {
     });
 });
 
+// verify the OTP entered by the user and return a JWT token if OTP is valid
 export const verifyOTP = TryCatch(async (req, res) => {
     const { email, otp: enteredOTP } = req.body;
 
@@ -83,7 +85,8 @@ export const verifyOTP = TryCatch(async (req, res) => {
     });
 });
 
-export const getUserProfile = TryCatch(async (req: AuthRequest, res) => {
+// return the profile of currently logged in user
+export const getMyProfile = TryCatch(async (req: AuthRequest, res) => {
     const user = req.user;
 
     if (!user) {
@@ -97,6 +100,7 @@ export const getUserProfile = TryCatch(async (req: AuthRequest, res) => {
     });
 });
 
+// update the name of currently logged in user
 export const updateUserName = TryCatch(async (req: AuthRequest, res) => {
     const user = await User.findById(req.user?._id);
     const { name } = req.body;
@@ -122,5 +126,29 @@ export const updateUserName = TryCatch(async (req: AuthRequest, res) => {
         message: "Name updated successfully",
         user,
         token,
+    });
+});
+
+// return the user with the given id
+export const getUserById = TryCatch(async (req: AuthRequest, res) => {
+    const { id } = req.params;
+    const user = await User.findById(id);
+
+    if (!user) {
+        return res.status(404).json({
+            message: "User not found",
+        });
+    }
+
+    res.status(200).json({
+        user,
+    });
+});
+
+// return a list of all users
+export const getAllUsers = TryCatch(async (req: AuthRequest, res) => {
+    const users = await User.find();
+    res.status(200).json({
+        users,
     });
 });
