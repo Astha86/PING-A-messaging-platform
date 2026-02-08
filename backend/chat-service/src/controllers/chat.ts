@@ -3,6 +3,7 @@ import TryCatch from "../config/tryCatch.js";
 import type { IAuthRequest } from "../middlewares/isAuth.js";
 import { Chat } from "../models/chat.js";
 import { Messages } from "../models/messages.js";
+import { text } from "express";
 
 // Logic to create a chat between users
 export const createChat = TryCatch(async (req: IAuthRequest, res) => {
@@ -87,4 +88,105 @@ export const getChats = TryCatch(async (req: IAuthRequest, res) => {
         }
     }));
     res.status(200).json({ chats: chatList });
+});
+
+// Logic to send a message in a chat
+export const sendMessage = TryCatch(async (req: IAuthRequest, res) => {
+    const senderId = req.user?._id;
+    const { chatId, text } = req.body;
+
+    // only req.file
+    const image = req.file ? {
+        url: req.file.path,
+        publicId: req.file.filename,
+    } : null;
+
+    if(!senderId) {
+        res.status(401).json({
+            message: "Unauthorized: Sender ID is missing!"
+        });
+        return;
+    }
+
+    if (!chatId) {
+        res.status(400).json({
+            message: "Chat ID is required"
+        });
+        return;
+    }
+
+    if(!text && !image) {
+        res.status(400).json({
+            message: "Message text or image is required"
+        });
+        return;
+    }
+
+    const chat = await Chat.findById(chatId);
+
+    if (!chat) {
+        res.status(404).json({
+            message: "Chat not found"
+        });
+        return;
+    }
+    
+    const isUserInChat = chat.users.includes(senderId);
+
+    if (!isUserInChat) {
+        res.status(403).json({
+            message: "Forbidden: You are not a participant in this chat"
+        });
+        return;
+    }
+
+    const otherUserId = chat.users.find(id => id !== senderId);
+
+    if(!otherUserId) {
+        res.status(400).json({
+            message: "Invalid chat participants"
+        });
+        return;
+    }
+
+    // pending: socket event to notify recipient about new message
+
+    let messageData: any = {
+        chatId,
+        sender: senderId,
+        seen: false,
+        seenAt: undefined,
+    };
+
+    if(image) {
+        messageData.image = {
+            url: image.url, //path
+            publicId: image.publicId, // filename
+        };
+        messageData.messageType = "image";
+        messageData.text = text || ""; // Set text to empty string if not provided 
+    } else {
+        messageData.text = text;
+        messageData.messageType = "text";
+    }
+    
+    // Create a new message document
+    const message = new Messages(messageData);
+    const savedMessage = await message.save();
+
+    const latestMessage = image ? "📷 Image" : text;
+    await Chat.findByIdAndUpdate(chatId, {
+        latestMessage: {
+            sender: senderId,
+            text: latestMessage,
+        },
+        updatedAt: new Date(),
+    }, { new: true });
+
+    // pending: emit socket event to recipient about new message
+
+    res.status(201).json({
+        message: "Message sent successfully",
+        data: savedMessage,
+    });
 });
