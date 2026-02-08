@@ -1,6 +1,6 @@
-# **Ping – Backend Services 🚀**
+# **Ping – (Backend)**
 
-This repository contains the backend microservices for **Ping**, a scalable chat application built using a **microservices architecture**.
+This folder contains the backend microservices for **Ping**, a scalable chat application built using a **microservices architecture**.
 
 ## **High-Level Architecture** 
 
@@ -184,7 +184,8 @@ User doesn’t wait for email to send:
 - TypeScript  
 - RabbitMQ  
 - Redis  
-- Nodemailer  
+- Nodemailer
+- Cloudinary
 ---
 
 ## **Environment Variables:**

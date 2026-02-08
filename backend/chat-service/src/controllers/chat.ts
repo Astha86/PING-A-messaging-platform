@@ -190,3 +190,83 @@ export const sendMessage = TryCatch(async (req: IAuthRequest, res) => {
         data: savedMessage,
     });
 });
+
+// Logic to retrieve messages for a specific chat
+export const getMessagesByChatId = TryCatch(async (req: IAuthRequest, res) => {
+    const userId = req.user?._id;
+    const { chatId } = req.params;
+
+    if (!chatId) {
+        res.status(400).json({
+            message: "Chat ID is required"
+        });
+        return;
+    }
+
+    if(!userId) {
+        res.status(401).json({
+            message: "Unauthorized: User ID is missing!"
+        });
+        return;
+    }
+
+    const chat = await Chat.findById(chatId);
+
+    if (!chat) {
+        res.status(404).json({
+            message: "Chat not found"
+        });
+        return;
+    }
+
+    const isUserInChat = chat.users.includes(userId);
+
+    if (!isUserInChat) {
+        res.status(403).json({
+            message: "Forbidden: You are not a participant in this chat"
+        });
+        return;
+    }
+
+    const messagesToMarkSeen = await Messages.updateMany(
+        {
+            chatId,
+            sender: { $ne: userId },
+            seen: false,
+        },
+        {
+            seen: true,
+            seenAt: new Date(),
+        }
+    );
+
+    const messages = await Messages.find({ chatId }).sort({ createdAt: 1 });
+
+    const otherUserId = chat.users.find(id => id !== userId);
+    
+    try {
+        const { data } = await axios.get(
+            `${process.env.USER_SERVICE_URL}/api/v1/users/${otherUserId}`
+        );
+
+        if(!otherUserId) {
+            res.status(400).json({
+                message: "Invalid chat participants"
+            });
+            return;
+        }
+
+        // Pending: socket event to notify sender that recipient has seen the messages
+
+        res.status(200).json({
+            messages,
+            user: data,
+        });
+    } catch (error) {
+        console.error("Error fetching other user details for chat", chatId, error);
+        res.status(200).json({
+            messages,
+            user: { _id: otherUserId, name: "Unknown User" },
+        });
+    }
+});
