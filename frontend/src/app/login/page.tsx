@@ -1,27 +1,41 @@
 'use client';
-import axios from 'axios';
+import AppContext, { user_service } from '@/src/context/AppContext';
 import { ArrowRight, Loader2, Mail } from 'lucide-react'
-import { useRouter } from 'next/navigation';
-import React, { useState } from 'react'
+import { redirect, useRouter } from 'next/navigation';
+import React, { useContext, useState } from 'react'
+import axios from 'axios';
+import Loading from '@/src/components/Loading';
+import { toast } from 'react-hot-toast';
 
 const loginPage = () => {
     const [email, setEmail] = useState("");
     const [isLoading, setIsLoading] = useState<boolean>(false);
     const router = useRouter();
 
+    const { isAuth, loading } = useContext(AppContext)!;
+
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>): Promise<void> => {
         e.preventDefault();
         setIsLoading(true);
         try {
-            const {data} = await axios.post(`http://localhost:8081/api/v1/login`, { email });
-            alert(data.message);
+            const {data} = await axios.post(`${user_service}/api/v1/login`, { email });
+            toast.success(data.message);
             router.push(`/verify?email=${email}`);
         } catch (error: any) {
-            alert(error.response?.data?.message || "An error occurred while sending OTP");
+            toast.error(error.response?.data?.message || "An error occurred while sending OTP");
         } finally {
             setIsLoading(false);
         }
     };
+
+    if(loading) {
+        return <Loading />;
+    }
+
+    if(isAuth) {
+        redirect(`/chat`);
+        return null; // Return null to prevent rendering the component while redirecting
+    }
 
   return (
     <div className='min-h-screen bg-gray-900 flex items-center justify-center p-4'>
