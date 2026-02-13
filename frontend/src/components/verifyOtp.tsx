@@ -10,8 +10,8 @@ import { toast } from 'react-hot-toast';
 
 const verifyOtp = () => {
 
+  const {isAuth, setIsAuth, setUser, loading, fetchChats, fetchUsers} = useContext(AppContext)!;
   const [isLoading, setIsLoading] = useState<boolean>(false);
-  const {isAuth, setIsAuth, setUser, loading} = useContext(AppContext)!;
   const [otp, setOtp] = useState<string[]>(Array(6).fill("")); // State to hold the OTP input
   const [error, setError] = useState<string>(""); // State to hold any error messages
   const [resendLoading, setResendLoading] = useState<boolean>(false); // State to manage resend OTP loading state
@@ -107,6 +107,8 @@ const verifyOtp = () => {
       inputRefs.current[0]?.focus(); // Move focus back to the first input field
       setUser(data.user);
       setIsAuth(true);
+      fetchChats();
+      fetchUsers();
     } catch (error: any) {
       setError(error.response?.data?.message || "An error occurred while verifying the OTP. Please try again.");
     } finally {
