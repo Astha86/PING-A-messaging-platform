@@ -1,6 +1,5 @@
 'use client'
 
-import { User } from "lucide-react";
 import Cookies from "js-cookie";
 import React, { createContext, ReactNode, useContext, useEffect, useState } from "react";
 import axios from "axios";
@@ -75,7 +74,7 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
                     Authorization: `Bearer ${token}`,
                 },
             });
-            
+
             setUser(data.user);
             setIsAuth(true);
             setLoading(false);
@@ -110,7 +109,7 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
                     Authorization: `Bearer ${token}`,
                 },
             });
-            
+
             setChats(data.chats);
         } catch (error) {
             console.error("Error fetching chats:", error);
@@ -131,8 +130,8 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
                     Authorization: `Bearer ${token}`,
                 },
             });
-            
-            setUser(data);
+
+            setUsers(data.users);
         } catch (error) {
             console.error("Error fetching users:", error);
         }
