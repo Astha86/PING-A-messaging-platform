@@ -1,22 +1,23 @@
 'use client';
+
 import axios from 'axios';
-import { ArrowRight, Edit, Loader2, Lock } from 'lucide-react'
+import { ArrowRight, Edit, Loader2, Lock, MessageCircle } from 'lucide-react';
 import AppContext, { user_service } from '@/src/context/AppContext';
 import { useSearchParams, useRouter, redirect } from 'next/navigation';
-import React, { useContext, useEffect, useState } from 'react'
+import React, { useContext, useEffect, useState } from 'react';
 import Cookies from 'js-cookie';
 import Loading from './Loading';
 import { toast } from 'react-hot-toast';
+import Link from 'next/link';
 
-const verifyOtp = () => {
-
-  const {isAuth, setIsAuth, setUser, loading, fetchChats, fetchUsers} = useContext(AppContext)!;
+const VerifyOtp = () => {
+  const { isAuth, setIsAuth, setUser, loading, fetchChats, fetchUsers } = useContext(AppContext)!;
   const [isLoading, setIsLoading] = useState<boolean>(false);
-  const [otp, setOtp] = useState<string[]>(Array(6).fill("")); // State to hold the OTP input
-  const [error, setError] = useState<string>(""); // State to hold any error messages
-  const [resendLoading, setResendLoading] = useState<boolean>(false); // State to manage resend OTP loading state
-  const [timer, setTimer] = useState<number>(60); // State to manage the countdown timer for resending OTP
-  const inputRefs = React.useRef<Array<HTMLInputElement | null>>([]); // Ref to manage OTP input fields
+  const [otp, setOtp] = useState<string[]>(Array(6).fill(""));
+  const [error, setError] = useState<string>("");
+  const [resendLoading, setResendLoading] = useState<boolean>(false);
+  const [timer, setTimer] = useState<number>(60);
+  const inputRefs = React.useRef<Array<HTMLInputElement | null>>([]);
   const router = useRouter();
 
 
@@ -40,10 +41,6 @@ const verifyOtp = () => {
     return () => clearInterval(countdown);
   }, []);
 
-  // console timer for resend OTP
-  console.log(`Resend OTP in: ${timer} seconds`);
-
-  // Handle OTP input change
   const handleOtpChange = (index: number, value: string): void => {
     if (/^\d*$/.test(value) && value.length <= 1) { // Only allow numeric input and max 1 digit
       const newOtp = [...otp];
@@ -79,41 +76,49 @@ const verifyOtp = () => {
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>): Promise<void> => {
-    e.preventDefault();
+  const handleVerify = async (otpValue: string): Promise<void> => {
+    if (isLoading) return;
+    setError("");
     setIsLoading(true);
 
-    // Simulate OTP verification process
-    const otpValue = otp.join("");
-    if (otpValue.length < 6) {
-      setError("Please enter the complete 6-digit OTP.");
-      setIsLoading(false);
-      return;
-    }
-
-    setError(""); // Clear any existing error messages
-    setIsLoading(true);
-
-    // Simulate an API call to verify the OTP
     try {
-      const {data} = await axios.post(`${user_service}/api/v1/verify-otp`, { email, otp: otpValue });
+      const { data } = await axios.post(`${user_service}/api/v1/verify-otp`, { email, otp: otpValue });
       toast.success(data.message);
       Cookies.set("token", data.token, {
         expires: 15,
         secure: true,
         path: "/",
       });
-      setOtp(Array(6).fill("")); // Clear OTP input fields after successful verification
-      inputRefs.current[0]?.focus(); // Move focus back to the first input field
+      setOtp(Array(6).fill(""));
       setUser(data.user);
       setIsAuth(true);
       fetchChats();
       fetchUsers();
     } catch (error: any) {
-      setError(error.response?.data?.message || "An error occurred while verifying the OTP. Please try again.");
+      setError(error.response?.data?.message || "Verification failed. Please try again.");
+      setOtp(Array(6).fill(""));
+      inputRefs.current[0]?.focus();
     } finally {
       setIsLoading(false);
     }
+  };
+
+  // Auto-submit when OTP is complete
+  useEffect(() => {
+    const otpValue = otp.join("");
+    if (otpValue.length === 6) {
+      handleVerify(otpValue);
+    }
+  }, [otp]);
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>): Promise<void> => {
+    e.preventDefault();
+    const otpValue = otp.join("");
+    if (otpValue.length < 6) {
+      setError("Please enter the complete 6-digit OTP.");
+      return;
+    }
+    handleVerify(otpValue);
   };
 
   // Handle resend OTP functionality
@@ -124,122 +129,105 @@ const verifyOtp = () => {
     setError(""); // Clear any existing error messages
 
     try {
-      const {data} = await axios.post(`${user_service}/api/v1/login`, { email });
+      const { data } = await axios.post(`${user_service}/api/v1/login`, { email });
       toast.success(data.message);
       setTimer(60); // Reset the timer after resending OTP
     } catch (error: any) {
-      setError(error.response?.data?.message || "An error occurred while resending the OTP. Please try again.");
+      setError(error.response?.data?.message || "Failed to resend OTP.");
     } finally {
       setResendLoading(false);
     }
   };
 
-  if(loading) {
-    return <Loading />;
-  }
-
-  if(isAuth) {
+  if (loading) return <Loading />;
+  if (isAuth) {
     redirect(`/chat`);
     return null; // Return null to prevent rendering the component while redirecting
   }
 
   return (
-    <div className='min-h-screen bg-gray-900 flex items-center justify-center p-4'>
-      <div className='max-w-md w-full'>
-        <div className="bg-gray-800 border border-gray-700 rounded-lg p-8">
-          <div className="text-center mb-8">
-            <div className="mx-auto w-20 h-20 bg-blue-600 rounded-lg flex items-center justify-center mb-6">
-              <Lock className="text-white" size={40} />
-            </div>
-            <h1 className="text-4xl font-bold text-white mb-3">
-              Verify your account
-            </h1>
-            <p className="text-gray-300 text-md">
-              We have sent a 6-digit OTP to
-            </p>
-            <div className="flex items-center justify-center mt-2">
-              <p className='text-blue-400 text-sm font-semibold'>
-                {email}
-              </p>
-              <div  className="ml-2 text-blue-400 cursor-pointer" onClick={() => router.push(`/login`)}>
-                <Edit size={16} />
-              </div>
-            </div>
-          </div>
+    <div className="min-h-screen bg-black text-white flex items-center justify-center p-6 relative overflow-hidden">
+      <div className="absolute top-[-10%] right-[-10%] w-[50%] h-[50%] bg-indigo-600/10 blur-[120px] rounded-full animate-pulse" />
+      <div className="absolute bottom-[-10%] left-[-10%] w-[50%] h-[50%] bg-purple-600/10 blur-[120px] rounded-full animate-pulse [animation-delay:1s]" />
 
-          <form className="space-y-6" onSubmit={handleSubmit}>
-            <div className="flex flex-col items-center justify-between">
-              <label className="block text-md font-medium text-gray-300 text-center w-full mb-4">
-                Enter the 6-digit OTP below:
-              </label>
-              <div className="flex justify-center space-x-2">
-                {otp.map((digit, index) => (
-                  <input
-                    key={index}
-                    ref={(el: HTMLInputElement | null) => {
-                      inputRefs.current[index] = el;
-                    }}
-                    type="text"
-                    maxLength={1}
-                    value={digit}
-                    onChange={(e) => handleOtpChange(index, e.target.value)}
-                    onKeyDown={(e) => handleOtpKeyDown(index, e)}
-                    onPaste={handlePaste}
-                    className="w-12 h-12 text-center bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
-                ))}
+      <div className="max-w-md w-full relative z-10 transition-all">
+        <div className="text-center mb-12">
+          <Link href="/" className="inline-flex items-center space-x-3 group mb-12">
+            <div className="w-14 h-14 bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 rounded-2xl flex items-center justify-center p-[1px] group-hover:scale-105 transition-transform duration-500">
+              <div className="w-full h-full bg-black rounded-[0.9rem] flex items-center justify-center">
+                <MessageCircle className="w-7 h-7 text-white" />
               </div>
             </div>
-            {
-              error && <p className="text-red-500 text-sm text-center">{error}</p>
-            }
-            <button 
-              type="submit"
-              className="w-full py-2 bg-blue-600 hover:bg-blue-700 rounded-lg text-white font-semibold transition duration-200 cursor-pointer"
-              disabled={isLoading}
-            >
-              {isLoading ? (
-                <div className="flex items-center justify-center">
-                  <Loader2 className="animate-spin" size={20} />
-                  Verifying OTP...
-                </div>
-              ) : (
-                <div className="flex items-center justify-center">
-                  <span>Verify & Proceed</span>
-                  <ArrowRight className="ml-2 w-5 h-5" size={20} />
-                </div>
-              )}
-            </button>
+          </Link>
+          <h1 className="text-4xl font-bold mb-4 tracking-tight">Check your email</h1>
+          <p className="text-neutral-400 text-lg font-medium">
+            Enter the 6-digit code we sent to <br /> <span className="text-indigo-400 font-semibold">{email}</span>
+          </p>
+          <button
+            onClick={() => router.push('/login')}
+            className="mt-4 text-neutral-500 hover:text-white flex items-center justify-center mx-auto space-x-2 text-sm font-semibold transition-colors"
+          >
+            <Edit size={14} />
+            <span>Change Email</span>
+          </button>
+        </div>
+
+        <div className="bg-white/[0.03] border border-white/[0.08] backdrop-blur-2xl rounded-[2.5rem] p-10 shadow-2xl">
+          <form className="space-y-10" onSubmit={handleSubmit}>
+            <div className="flex justify-between gap-3">
+              {otp.map((digit, index) => (
+                <input
+                  key={index}
+                  ref={(el: HTMLInputElement | null) => {
+                    inputRefs.current[index] = el;
+                  }}
+                  type="text"
+                  maxLength={1}
+                  value={digit}
+                  onChange={(e) => handleOtpChange(index, e.target.value)}
+                  onKeyDown={(e) => handleOtpKeyDown(index, e)}
+                  onPaste={handlePaste}
+                  className="w-12 h-16 md:w-14 md:h-16 text-center text-3xl font-bold bg-white/[0.02] border border-white/[0.1] rounded-2xl text-white focus:outline-none focus:border-indigo-500/50 focus:bg-white/[0.04] transition-all"
+                />
+              ))}
+            </div>
+
+            {error && (
+              <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-2xl text-red-400 text-sm font-medium text-center">
+                {error}
+              </div>
+            )}
+
+            {isLoading && (
+              <div className="flex flex-col items-center justify-center space-y-4 py-4 animate-in fade-in zoom-in duration-300">
+                <Loader2 className="animate-spin text-indigo-500" size={40} />
+                <p className="text-sm font-bold text-indigo-400 uppercase tracking-widest animate-pulse">
+                  Authenticating...
+                </p>
+              </div>
+            )}
           </form>
 
-          {/* resend OTP section */}
-          <div className="mt-6 text-center">
-            <div className="text-gray-400 text-sm">
-              Didn't receive the OTP?{" "}
+          <div className="mt-10 text-center">
+            <p className="text-neutral-500 text-sm font-medium">
+              Didn't receive the code?{' '}
               {timer > 0 ? (
-                <span className="text-gray-500">Resend in {timer}s</span>
+                <span className="text-indigo-400">Resend in {timer}s</span>
               ) : (
-              <button
-                className="text-blue-400 hover:text-blue-300 font-medium cursor-pointer"
-                disabled={resendLoading}
-                onClick={handleResendOtp}
-              >
-                {resendLoading ? (
-                  <div className="flex items-center justify-center">
-                    <Loader2 className="animate-spin" size={16} />
-                    Resending...
-                  </div>
-                ) : (
-                  "Resend OTP"
-                )}
-              </button>
+                <button
+                  className="text-white hover:text-indigo-400 font-bold transition-colors disabled:opacity-50"
+                  disabled={resendLoading}
+                  onClick={handleResendOtp}
+                >
+                  {resendLoading ? 'Resending...' : 'Resend Code'}
+                </button>
               )}
-            </div>
+            </p>
           </div>
         </div>
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default verifyOtp;
+export default VerifyOtp;

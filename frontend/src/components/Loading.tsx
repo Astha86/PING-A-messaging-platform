@@ -1,17 +1,16 @@
-import React from 'react'
-
 const Loading = () => {
   return (
-    <div className="min-h-screen bg-gray-900 flex items-center justify-center">
-      <div className="flex items-center space-x-2">
-        <span className="text-white text-lg">Loading </span>
-        <svg className="animate-spin h-8 w-8 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
-        </svg>
+    <div className="min-h-screen bg-black flex flex-col items-center justify-center space-y-6">
+      <div className="relative">
+        <div className="w-16 h-16 border-4 border-indigo-500/20 border-t-indigo-500 rounded-full animate-spin" />
+      </div>
+      <div className="flex flex-col items-center space-y-2">
+        <span className="text-white text-base font-bold tracking-widest uppercase opacity-40 animate-pulse">
+          Ping
+        </span>
       </div>
     </div>
-  )
-}
+  );
+};
 
 export default Loading;
