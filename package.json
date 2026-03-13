@@ -1,0 +1,15 @@
+{
+  "name": "ping-root",
+  "version": "1.0.0",
+  "description": "Root package for starting all services in development",
+  "scripts": {
+    "dev:user": "npm run dev --prefix backend/user-service",
+    "dev:chat": "npm run dev --prefix backend/chat-service",
+    "dev:mail": "npm run dev --prefix backend/mail-service",
+    "dev:frontend": "npm run dev --prefix frontend",
+    "dev": "concurrently -n \"USER,CHAT,MAIL,FRONT\" -c \"blue,green,magenta,yellow\" \"npm run dev:user\" \"npm run dev:chat\" \"npm run dev:mail\" \"npm run dev:frontend\""
+  },
+  "devDependencies": {
+    "concurrently": "^9.2.1"
+  }
+}
