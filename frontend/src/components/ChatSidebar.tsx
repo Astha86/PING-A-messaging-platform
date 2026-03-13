@@ -22,6 +22,7 @@ const ChatSidebar = ({
     setShowAllUsers,
     users,
     loggedInUser,
+    chats,
     selectedUser,
     setSelectedUser,
     handleLogout
@@ -103,6 +104,46 @@ const ChatSidebar = ({
                                 </button>
                             ))
                         }
+                    </div>
+                ) : chats && chats.length > 0 ? (
+                    <div className="space-y-1">
+                        <p className="px-4 mb-3 text-[10px] font-bold text-neutral-500 uppercase tracking-widest">Recent Chats</p>
+                        {chats
+                            .filter((c) => c.user?.name?.toLowerCase().includes(searchQuery.toLowerCase()) ?? false)
+                            .map((c) => (
+                                <button
+                                    key={c.chat._id}
+                                    onClick={() => {
+                                        setSelectedUser(c.user._id);
+                                    }}
+                                    className={`w-full flex items-center gap-3 p-3 rounded-2xl border transition-all duration-200 group ${selectedUser === c.user._id
+                                            ? "bg-indigo-600/10 border-indigo-500/20 text-white"
+                                            : "bg-transparent border-transparent text-neutral-400 hover:bg-white/[0.04] hover:text-white"
+                                        }`}
+                                >
+                                    <div className="relative">
+                                        <div className="w-11 h-11 bg-white/[0.05] rounded-xl flex items-center justify-center border border-white/5 group-hover:scale-105 transition-transform duration-300">
+                                            <div className="w-7 h-7 bg-gradient-to-br from-indigo-500/20 to-purple-500/20 rounded-lg flex items-center justify-center font-bold text-indigo-400 text-xs">
+                                                {c.user.name?.charAt(0) || "U"}
+                                            </div>
+                                        </div>
+                                        <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-emerald-500 border-2 border-black rounded-full" />
+                                    </div>
+                                    <div className="flex-1 text-left min-w-0">
+                                        <div className="flex justify-between items-center px-1">
+                                            <p className='font-semibold text-sm tracking-tight truncate'>{c.user.name}</p>
+                                            {c.chat.unseenMessagesCount && c.chat.unseenMessagesCount > 0 ? (
+                                                <span className="flex items-center justify-center min-w-[18px] h-[18px] px-1 bg-indigo-500 text-white text-[10px] font-bold rounded-full shadow-lg shadow-indigo-500/40">
+                                                    {c.chat.unseenMessagesCount}
+                                                </span>
+                                            ) : null}
+                                        </div>
+                                        <p className='text-[11px] text-neutral-500 truncate'>
+                                            {c.chat.latestMessage?.text || "No messages yet"}
+                                        </p>
+                                    </div>
+                                </button>
+                            ))}
                     </div>
                 ) : (
                     <div className="h-full flex flex-col items-center justify-center px-8 text-center space-y-5">

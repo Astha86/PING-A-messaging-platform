@@ -68,7 +68,7 @@ export const getChats = TryCatch(async (req: IAuthRequest, res) => {
             `${process.env.USER_SERVICE_URL}/api/v1/users/${otherUserId}`
         );
         return {
-            user: data,
+            user: data.user,
             chat: {
                 ...chat.toObject(),
                 latestMessage: chat.latestMessage || null, // Ensure latestMessage is included in the response
@@ -260,7 +260,7 @@ export const getMessagesByChatId = TryCatch(async (req: IAuthRequest, res) => {
 
         res.status(200).json({
             messages,
-            user: data,
+            user: data.user,
         });
     } catch (error) {
         console.error("Error fetching other user details for chat", chatId, error);

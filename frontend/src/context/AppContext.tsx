@@ -23,7 +23,7 @@ export interface Chat {
     };
     createdAt: string;
     updatedAt: string;
-    unseenCount?: number;
+    unseenMessagesCount?: number;
 }
 
 export interface Chats {
