@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { User } from '../context/AppContext';
 import { MessageCircle, Plus, Search, UserCircle, X, LogOut, Settings } from 'lucide-react';
+import { formatName, getInitials } from '../lib/utils';
 
 interface ChatSideProps {
     sidebarOpen: boolean;
@@ -98,8 +99,9 @@ const ChatSidebar = ({
                                         <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-indigo-500 border-2 border-black rounded-full" />
                                     </div>
                                     <div className="flex-1 text-left">
-                                        <p className='font-semibold text-sm tracking-tight'>{u.name}</p>
-                                        <p className='text-[11px] text-neutral-500 truncate'>{u.email}</p>
+                                        <p className='font-semibold text-sm tracking-tight'>
+                                            {formatName(u.name)}
+                                        </p>
                                     </div>
                                 </button>
                             ))
@@ -124,14 +126,16 @@ const ChatSidebar = ({
                                     <div className="relative">
                                         <div className="w-11 h-11 bg-white/[0.05] rounded-xl flex items-center justify-center border border-white/5 group-hover:scale-105 transition-transform duration-300">
                                             <div className="w-7 h-7 bg-gradient-to-br from-indigo-500/20 to-purple-500/20 rounded-lg flex items-center justify-center font-bold text-indigo-400 text-xs">
-                                                {c.user.name?.charAt(0) || "U"}
+                                                {getInitials(c.user.name)}
                                             </div>
                                         </div>
                                         <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-emerald-500 border-2 border-black rounded-full" />
                                     </div>
                                     <div className="flex-1 text-left min-w-0">
                                         <div className="flex justify-between items-center px-1">
-                                            <p className='font-semibold text-sm tracking-tight truncate'>{c.user.name}</p>
+                                            <p className='font-semibold text-sm tracking-tight truncate'>
+                                                {formatName(c.user.name)}
+                                            </p>
                                             {c.chat.unseenMessagesCount && c.chat.unseenMessagesCount > 0 ? (
                                                 <span className="flex items-center justify-center min-w-[18px] h-[18px] px-1 bg-indigo-500 text-white text-[10px] font-bold rounded-full shadow-lg shadow-indigo-500/40">
                                                     {c.chat.unseenMessagesCount}
@@ -163,10 +167,12 @@ const ChatSidebar = ({
                 <div className="flex items-center justify-between bg-white/[0.03] border border-white/[0.08] p-3 rounded-2xl">
                     <div className="flex items-center gap-3">
                         <div className="w-9 h-9 bg-gradient-to-br from-indigo-500 to-purple-500 rounded-xl flex items-center justify-center font-bold text-white text-xs">
-                            {loggedInUser?.name?.charAt(0) || "U"}
+                            {getInitials(loggedInUser?.name)}
                         </div>
                         <div className="hidden lg:block overflow-hidden">
-                            <p className="text-xs font-bold text-white truncate max-w-[80px]">{loggedInUser?.name}</p>
+                            <p className="text-xs font-bold text-white truncate max-w-[80px]">
+                                {formatName(loggedInUser?.name)}
+                            </p>
                             <span className="text-[10px] font-medium text-emerald-500">Active now</span>
                         </div>
                     </div>
