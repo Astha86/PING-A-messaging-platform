@@ -3,7 +3,7 @@
 import ChatSidebar from '@/src/components/ChatSidebar';
 import Loading from '@/src/components/Loading';
 import EmptyChat from '@/src/components/EmptyChat';
-import Connecting from '@/src/components/Connecting';
+import MessageArea from '@/src/components/MessageArea';
 import AppContext, { User } from '@/src/context/AppContext';
 import { useRouter } from 'next/navigation';
 import { useContext, useEffect, useState } from 'react';
@@ -49,7 +49,7 @@ const ChatApp = () => {
   const handleLogout = () => logout();
 
   return (
-    <div className='min-h-screen flex bg-[#050505] text-white relative overflow-hidden'>
+    <div className='h-screen flex bg-[#050505] text-white relative overflow-hidden'>
       {/* Background gradients for depth */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
         <div className="absolute top-[10%] right-[10%] w-[30%] h-[30%] bg-blue-600/5 blur-[120px] rounded-full" />
@@ -75,7 +75,12 @@ const ChatApp = () => {
         {!selectedUser ? (
           <EmptyChat />
         ) : (
-          <Connecting />
+          <MessageArea 
+            selectedUserId={selectedUser} 
+            chats={chats} 
+            loggedInUser={loggedInUser}
+            onlineUsers={onlineUsers}
+          />
         )}
       </main>
 

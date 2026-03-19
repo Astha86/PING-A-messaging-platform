@@ -1,6 +1,7 @@
 import { Server } from 'socket.io';
 import http from 'http';
 import express from 'express';
+import { Messages } from '../models/messages.js';
 
 const app = express();
 
@@ -28,6 +29,20 @@ io.on("connection", (socket) => {
 
     // io.emit() is used to send events to all the connected clients
     io.emit("getOnlineUsers", Object.keys(userSocketMap));
+
+    // Handle marking a specific message as seen by the recipient
+    socket.on("markMessageAsSeen", async ({ messageId, chatId, senderId }) => {
+        try {
+            await Messages.findByIdAndUpdate(messageId, { seen: true, seenAt: new Date() });
+            const senderSocketId = getReceiverSocketId(senderId);
+            if (senderSocketId) {
+                // Emit to the sender that their message was seen
+                io.to(senderSocketId).emit("messagesSeen", { chatId, seenBy: userId });
+            }
+        } catch (error) {
+            console.error("Error marking message as seen", error);
+        }
+    });
 
     //disconnect
     socket.on("disconnect", () => {

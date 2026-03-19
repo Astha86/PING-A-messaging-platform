@@ -59,7 +59,7 @@ export const getChats = TryCatch(async (req: IAuthRequest, res) => {
 
     // Count the number of unseen messages in the chat for the current user
     const unseenMessagesCount = await Messages.countDocuments({
-        chat: chat._id,
+        chatId: chat._id,
         sender: { $ne: userId },
         seen: false,
     });
