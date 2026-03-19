@@ -7,6 +7,7 @@ import Connecting from '@/src/components/Connecting';
 import AppContext, { User } from '@/src/context/AppContext';
 import { useRouter } from 'next/navigation';
 import { useContext, useEffect, useState } from 'react';
+import { useSocketContext } from '@/src/context/SocketContext';
 
 export interface Message {
   _id: string;
@@ -25,6 +26,7 @@ export interface Message {
 
 const ChatApp = () => {
   const { loading, isAuth, logout, chats, user: loggedInUser, users, fetchChats, setChats } = useContext(AppContext)!;
+  const { onlineUsers } = useSocketContext();
 
   const [selectedUser, setSelectedUser] = useState<string | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -65,6 +67,7 @@ const ChatApp = () => {
         selectedUser={selectedUser}
         setSelectedUser={setSelectedUser}
         handleLogout={handleLogout}
+        onlineUsers={onlineUsers}
       />
 
       {/* Main Chat Area */}

@@ -1,11 +1,10 @@
-import { Server, Socket } from 'socket.io';
+import { Server } from 'socket.io';
 import http from 'http';
 import express from 'express';
 
 const app = express();
 
 const server = http.createServer(app);
-
 const io = new Server(server, {
     cors: {
         origin: "*",
@@ -13,20 +12,22 @@ const io = new Server(server, {
     },
 });
 
-// object of online user
-const userSocketMap: Record<string, string> = {};
+export const getReceiverSocketId = (receiverId: string) => {
+    return userSocketMap[receiverId];
+};
 
-io.on("connection", (socket: Socket) => {
-    console.log("A user connected", socket.id);
+const userSocketMap: { [key: string]: string } = {}; // {userId: socketId}
 
-    const userId = socket.handshake.query.userId as string | undefined;
+io.on("connection", (socket) => {
+    const userId = socket.handshake.query.userId as string;
 
     if (userId && userId !== "undefined") {
         userSocketMap[userId] = socket.id;
-        console.log(`User connected: ${userId} with socket id ${socket.id}`);
+        console.log(`User ${userId} connected with socket ${socket.id}`);
     }
 
-    io.emit("getOnlineUser", Object.keys(userSocketMap));
+    // io.emit() is used to send events to all the connected clients
+    io.emit("getOnlineUsers", Object.keys(userSocketMap));
 
     //disconnect
     socket.on("disconnect", () => {
@@ -35,13 +36,9 @@ io.on("connection", (socket: Socket) => {
         // remove user from map
         if (userId) {
             delete userSocketMap[userId];
-            console.log(`User ${userId} removed from online users`);
-            io.emit("getOnlineUser", Object.keys(userSocketMap));
+            console.log(`User ${userId} disconnected`);
         }
-    });
-
-    socket.on("connect_error", (err) => {
-        console.log("Socket connection error", err);
+        io.emit("getOnlineUsers", Object.keys(userSocketMap));
     });
 });
 

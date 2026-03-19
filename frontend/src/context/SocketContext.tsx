@@ -1,8 +1,9 @@
 "use client";
 
-import { createContext, useContext, useEffect, useState } from "react";
-import { io, Socket } from "socket.io-client";
-import { chat_service, useAppContext } from "./AppContext";
+import { createContext, useContext, useEffect, useState, ReactNode } from "react";
+import io, { Socket } from "socket.io-client";
+import { chat_service } from "./AppContext";
+import AppContext from "./AppContext";
 
 interface SocketContextType {
     socket: Socket | null;
@@ -14,29 +15,43 @@ const SocketContext = createContext<SocketContextType | null>(null);
 interface ProviderProps {
     children: React.ReactNode;
 }
+export const useSocketContext = () => {
+    const context = useContext(SocketContext);
+    if (!context) {
+        throw new Error('useSocketContext must be used within a SocketProvider');
+    }
+    return context;
+};
 
 export const SocketProvider = ({ children }: ProviderProps) => {
     const [socket, setSocket] = useState<Socket | null>(null);
-    const {user} = useAppContext();
     const [onlineUsers, setOnlineUsers] = useState<string[]>([]);
+    const { user, isAuth } = useContext(AppContext)!;
 
     useEffect(() => {
-        if(!user?._id) return;
-        const newSocket = io(chat_service, {
-            query: {
-                userId: user._id,
+        if (isAuth && user) {
+            const newSocket = io(chat_service, {
+                query: {
+                    userId: user._id,
+                },
+            });
+
+            setSocket(newSocket);
+
+            newSocket.on("getOnlineUsers", (users: string[]) => {
+                setOnlineUsers(users);
+            });
+
+            return () => {
+                newSocket.close();
+            };
+        } else {
+            if (socket) {
+                socket.close();
+                setSocket(null);
             }
-        });
-        setSocket(newSocket);
-
-        newSocket.on("getOnlineUser", (users: string[]) => {
-            setOnlineUsers(users);
-        });
-
-        return () => {
-            newSocket.disconnect();
-        };
-    }, [user?._id]);
+        }
+    }, [isAuth, user]);
 
     return (
         <SocketContext.Provider value={{ socket, onlineUsers }}>
@@ -44,5 +59,3 @@ export const SocketProvider = ({ children }: ProviderProps) => {
         </SocketContext.Provider>
     );
 };
-
-export const SocketData = () => useContext(SocketContext);

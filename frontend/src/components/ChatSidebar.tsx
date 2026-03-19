@@ -14,6 +14,7 @@ interface ChatSideProps {
     selectedUser: string | null;
     setSelectedUser: (userId: string | null) => void;
     handleLogout: () => void;
+    onlineUsers: string[];
 }
 
 const ChatSidebar = ({
@@ -26,7 +27,8 @@ const ChatSidebar = ({
     chats,
     selectedUser,
     setSelectedUser,
-    handleLogout
+    handleLogout,
+    onlineUsers
 }: ChatSideProps) => {
 
     const [searchQuery, setsearchQuery] = useState("");
@@ -96,7 +98,9 @@ const ChatSidebar = ({
                                         <div className="w-11 h-11 bg-white/[0.05] rounded-xl flex items-center justify-center border border-white/5 group-hover:scale-105 transition-transform duration-300">
                                             <UserCircle className='w-7 h-7 text-neutral-500 group-hover:text-indigo-400 transition-colors' />
                                         </div>
-                                        <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-indigo-500 border-2 border-black rounded-full" />
+                                        {onlineUsers.includes(u._id) && (
+                                            <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-emerald-500 border-2 border-black rounded-full" />
+                                        )}
                                     </div>
                                     <div className="flex-1 text-left">
                                         <p className='font-semibold text-sm tracking-tight'>
@@ -129,7 +133,9 @@ const ChatSidebar = ({
                                                 {getInitials(c.user.name)}
                                             </div>
                                         </div>
-                                        <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-emerald-500 border-2 border-black rounded-full" />
+                                        {onlineUsers.includes(c.user._id) && (
+                                            <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-emerald-500 border-2 border-black rounded-full" />
+                                        )}
                                     </div>
                                     <div className="flex-1 text-left min-w-0">
                                         <div className="flex justify-between items-center px-1">

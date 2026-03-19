@@ -4,6 +4,7 @@ import type { IAuthRequest } from "../middlewares/isAuth.js";
 import { Chat } from "../models/chat.js";
 import { Messages } from "../models/messages.js";
 import { text } from "express";
+import { io, getReceiverSocketId } from "../config/socket.js";
 
 // Logic to create a chat between users
 export const createChat = TryCatch(async (req: IAuthRequest, res) => {
@@ -183,7 +184,11 @@ export const sendMessage = TryCatch(async (req: IAuthRequest, res) => {
         updatedAt: new Date(),
     }, { new: true });
 
-    // pending: emit socket event to recipient about new message
+    // emit socket event to recipient about new message
+    const receiverSocketId = getReceiverSocketId(otherUserId);
+    if (receiverSocketId) {
+        io.to(receiverSocketId).emit("newMessage", savedMessage);
+    }
 
     res.status(201).json({
         message: "Message sent successfully",
@@ -256,7 +261,11 @@ export const getMessagesByChatId = TryCatch(async (req: IAuthRequest, res) => {
             return;
         }
 
-        // Pending: socket event to notify sender that recipient has seen the messages
+        // Notify sender that recipient has seen the messages
+        const senderSocketId = getReceiverSocketId(otherUserId);
+        if (senderSocketId) {
+            io.to(senderSocketId).emit("messagesSeen", { chatId, seenBy: userId });
+        }
 
         res.status(200).json({
             messages,
