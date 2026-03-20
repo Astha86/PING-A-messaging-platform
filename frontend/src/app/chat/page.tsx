@@ -80,6 +80,7 @@ const ChatApp = () => {
             chats={chats} 
             loggedInUser={loggedInUser}
             onlineUsers={onlineUsers}
+            setSelectedUser={setSelectedUser}
           />
         )}
       </main>
