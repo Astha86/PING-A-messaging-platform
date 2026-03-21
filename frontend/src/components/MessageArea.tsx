@@ -1,11 +1,11 @@
 import React, { useEffect, useRef, useState, useContext } from 'react';
-import { Send, Image as ImageIcon, MoreVertical, Phone, Video, Smile } from 'lucide-react';
 import { useSocketContext } from '../context/SocketContext';
 import axios from 'axios';
 import Cookies from 'js-cookie';
 import AppContext, { User, Chats, chat_service } from '../context/AppContext';
 import MessageHeader from './MessageHeader';
 import MessageInput from './MessageInput';
+import ClearChatModal from './ClearChatModal';
 
 interface Message {
   _id: string;
@@ -34,6 +34,8 @@ const MessageArea = ({ selectedUserId, chats, loggedInUser, onlineUsers, setSele
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState("");
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+  const [showClearModal, setShowClearModal] = useState(false);
+  const [deleteForBoth, setDeleteForBoth] = useState(false);
   const [loading, setLoading] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const pickerRef = useRef<HTMLDivElement>(null);
@@ -163,6 +165,21 @@ const MessageArea = ({ selectedUserId, chats, loggedInUser, onlineUsers, setSele
     }
   };
 
+  const handleClearChat = async () => {
+    if (!chatId) return;
+    try {
+      const token = Cookies.get("token");
+      await axios.delete(`${chat_service}/api/v1/chat/${chatId}/clear`, {
+        headers: { Authorization: `Bearer ${token}` },
+        data: { deleteForBoth }
+      });
+      setMessages([]);
+      fetchChats();
+    } catch (error) {
+      console.error("Error clearing chat messages:", error);
+    }
+  };
+
   const handleEmojiClick = (emojiObject: any) => {
     setNewMessage(prev => prev + emojiObject.emoji);
   };
@@ -172,12 +189,13 @@ const MessageArea = ({ selectedUserId, chats, loggedInUser, onlineUsers, setSele
   const isOnline = onlineUsers.includes(selectedUserId);
 
   return (
-    <div className="flex-1 flex flex-col h-full bg-[#050505]">
+    <div className="flex-1 flex flex-col h-full bg-[#050505] relative">
       {/* Upper Bar */}
-      <MessageHeader
+      <MessageHeader 
         selectedUser={selectedUser}
         isOnline={isOnline}
         setSelectedUser={setSelectedUser}
+        onOpenClearModal={() => setShowClearModal(true)}
       />
 
       {/* Messages */}
@@ -216,7 +234,7 @@ const MessageArea = ({ selectedUserId, chats, loggedInUser, onlineUsers, setSele
       </div>
 
       {/* Input Area */}
-      <MessageInput
+      <MessageInput 
         newMessage={newMessage}
         setNewMessage={setNewMessage}
         handleSendMessage={handleSendMessage}
@@ -225,6 +243,20 @@ const MessageArea = ({ selectedUserId, chats, loggedInUser, onlineUsers, setSele
         pickerRef={pickerRef}
         handleEmojiClick={handleEmojiClick}
       />
+
+      {showClearModal && (
+        <ClearChatModal
+          selectedUser={selectedUser}
+          deleteForBoth={deleteForBoth}
+          setDeleteForBoth={setDeleteForBoth}
+          onCancel={() => setShowClearModal(false)}
+          onConfirm={() => {
+            setShowClearModal(false);
+            handleClearChat();
+            setDeleteForBoth(false);
+          }}
+        />
+      )}
     </div>
   );
 };

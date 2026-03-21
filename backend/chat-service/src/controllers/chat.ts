@@ -60,9 +60,22 @@ export const getChats = TryCatch(async (req: IAuthRequest, res) => {
     // Count the number of unseen messages in the chat for the current user
     const unseenMessagesCount = await Messages.countDocuments({
         chatId: chat._id,
-        sender: { $ne: userId },
+        sender: { $ne: userId },  // $ne is a mongoDB operator which means not equal , it means here we are counting the messages which are not sent by the current user
         seen: false,
+        deletedBy: { $ne: userId },
     });
+    
+    // Find the actual latest message visible to this user
+    const actualLatestMessage = await Messages.findOne({
+        chatId: chat._id,
+        deletedBy: { $ne: userId }
+    }).sort({ createdAt: -1 });
+
+    // Format the latest message to be sent to the frontend
+    const formattedLatestMessage = actualLatestMessage ? {
+        sender: actualLatestMessage.sender,
+        text: actualLatestMessage.messageType === "image" ? "📷 Image" : actualLatestMessage.text
+    } : null;
     
     try {
         const { data } = await axios.get(
@@ -72,7 +85,7 @@ export const getChats = TryCatch(async (req: IAuthRequest, res) => {
             user: data.user,
             chat: {
                 ...chat.toObject(),
-                latestMessage: chat.latestMessage || null, // Ensure latestMessage is included in the response
+                latestMessage: formattedLatestMessage,
                 unseenMessagesCount,
             },
         };
@@ -82,7 +95,7 @@ export const getChats = TryCatch(async (req: IAuthRequest, res) => {
             user: { _id: otherUserId, name: "Unknown User"},
             chat: {
                 ...chat.toObject(),
-                latestMessage: chat.latestMessage || null,
+                latestMessage: formattedLatestMessage,
                 unseenMessagesCount,
             },
         };
@@ -238,6 +251,7 @@ export const getMessagesByChatId = TryCatch(async (req: IAuthRequest, res) => {
             chatId,
             sender: { $ne: userId },
             seen: false,
+            deletedBy: { $ne: userId }, 
         },
         {
             seen: true,
@@ -245,7 +259,10 @@ export const getMessagesByChatId = TryCatch(async (req: IAuthRequest, res) => {
         }
     );
 
-    const messages = await Messages.find({ chatId }).sort({ createdAt: 1 });
+    const messages = await Messages.find({ 
+        chatId, 
+        deletedBy: { $ne: userId } 
+    }).sort({ createdAt: 1 });
 
     const otherUserId = chat.users.find(id => id !== userId);
     
@@ -278,4 +295,50 @@ export const getMessagesByChatId = TryCatch(async (req: IAuthRequest, res) => {
             user: { _id: otherUserId, name: "Unknown User" },
         });
     }
+});
+
+// Logic to clear all messages in a chat
+export const clearChatMessages = TryCatch(async (req: IAuthRequest, res) => {
+    const userId = req.user?._id;
+    const { chatId } = req.params;
+    const { deleteForBoth } = req.body;
+
+    if (!userId) {
+        res.status(401).json({ message: "Unauthorized" });
+        return;
+    }
+
+    if (!chatId) {
+        res.status(400).json({ message: "Chat ID is required" });
+        return;
+    }
+
+    const chat = await Chat.findById(chatId);
+    if (!chat || !chat.users.includes(userId)) {
+        res.status(403).json({ message: "Forbidden: You are not a participant in this chat" });
+        return;
+    }
+
+    if (deleteForBoth) {
+        // Physically delete all messages for everyone
+        await Messages.deleteMany({ chatId });
+        
+        // Remove the latestMessage field from the chat document globally
+        await Chat.findByIdAndUpdate(
+            chatId, 
+            { 
+                $unset: { latestMessage: 1 },
+                updatedAt: new Date()
+            },
+            { new: true }
+        );
+    } else {
+        // Only delete for the requesting user by adding them to the 'deletedBy' array
+        await Messages.updateMany(
+            { chatId },
+            { $addToSet: { deletedBy: userId } }
+        );
+    }
+
+    res.status(200).json({ message: "Chat messages cleared successfully" });
 });

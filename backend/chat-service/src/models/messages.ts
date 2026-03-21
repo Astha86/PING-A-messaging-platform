@@ -13,6 +13,7 @@ export interface IMessage extends Document {
     seenAt?: Date;
     createdAt: Date;
     updatedAt: Date;    
+    deletedBy: string[];
 }
 
 const MessageSchema: Schema<IMessage> = new Schema({
@@ -43,6 +44,9 @@ const MessageSchema: Schema<IMessage> = new Schema({
         type: Date,
         default: null, // Set to null when not seen, and updated to the timestamp when seen
     },
+    deletedBy: [{
+        type: String,
+    }],
 }, { timestamps: true });
 
 export const Messages = mongoose.model<IMessage>("Messages", MessageSchema);
