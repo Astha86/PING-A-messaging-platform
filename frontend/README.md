@@ -1,36 +1,78 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# **Ping – Frontend Experience (Next.js + TypeScript)**
 
-## Getting Started
+Ping's frontend is a high-performance **Next.js+** and **TypeScript** application featuring stunning, dark-themed UI, rich micro-animations, and real-time connectivity.
 
-First, run the development server:
+---
+
+## **Key Features**
+
+- **Real-Time Connectivity**: Native-feeling chat powered by **Socket.IO**.
+- **Responsive Layout**: Seamless switching between sidebar and message view on mobile devices.
+- **Premium Aesthetics**: Gradient-heavy, blurred glass-morphism components and custom dark theme.
+- **Smart Components**:
+  - `MessageArea`: Dynamic message list with custom infinite scrolling behavior.
+  - `MessageHeader`: Real-time presence indicators ("Online/Offline") and user stats.
+  - `MessageInput`: Custom rich input with **Emoji Picker** and media handling.
+
+---
+
+## **Component Breakdown**
+
+```bash
+FRONTEND/
+├── src/app/
+│   ├── chat/             # Chat Interface
+│   ├──  login/           # Login Interface
+│   ├──  verify/          # Verify Interface
+├── src/components/       # Modular, atomic components
+│   ├── ChatSidebar.tsx   # Contact list, search, and activity tracking
+│   ├── MessageArea.tsx   # Message bubble rendering and seen-status handling
+│   ├── MessageInput.tsx  # Emoji-enabled, auto-scaling message input
+│   ├── MessageHeader.tsx # Responsive chat controls and user detail
+│   └── Loading.tsx       # Centralized, high-end loading animations
+└── src/context/          # Global state (AppContext, SocketContext)
+```
+
+---
+
+## **Getting Started**
+
+### **1. Installation**
+
+```bash
+npm install
+```
+
+### **2. Start Development**
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+---
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## **Core Workflows**
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+### **Mobile View Management**
 
-## Learn More
+The UI uses conditional Tailwind classes and `selectedUser` state to intelligently hide the sidebar and show the chat area on smaller screens.
 
-To learn more about Next.js, take a look at the following resources:
+### **Real-time Engine**
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+We use `SocketContext` to provide a single WebSocket instance throughout the app, enabling:
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+- Incoming message live-updates.
+- Message "Read/Seen" notifications.
+- Real-time presence detection.
 
-## Deploy on Vercel
+---
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## **✨ Modern UI Highlights**
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- **Lucide-React** for sharp iconography.
+- **Tailwind CSS** for a streamlined, utility-first design system.
+- **Custom Scroll-bars** to maintain a deep-space dark theme consistency.
+
+---
+
+_Ping: Designed for a modern web._

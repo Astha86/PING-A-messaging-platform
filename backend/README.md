@@ -1,251 +1,116 @@
-# **Ping – (Backend)**
+# **Ping – Backend Microservices Architecture**
 
-This folder contains the backend microservices for **Ping**, a scalable chat application built using a **microservices architecture**.
+![Ping Architecture](./assets/pingArchitecture.jpg)
 
-## **High-Level Architecture** 
-
-We have **two core backend services** involved here:
-
-1. **User Service** → handles auth logic  
-2. **Mail Service** → sends emails
-
-Supporting systems:
-
-* **Redis** → fast temporary storage  
-* **RabbitMQ** → async communication (event bus)
-
- **Flow Diagram:**
-<!-- <div align="center">
-
-<img src="" alt="architecture" height="70">
-
-</div> -->
-
-                                ┌────────────┐
-                                │  Frontend  │
-                                │  (React)   │
-                                └─────┬──────┘
-                                      │  POST /login
-                                      ▼
-                            ┌────────────────────────┐
-                            │     USER SERVICE       │
-                            │                        │
-                            │                        │
-                            │  ┌──────────────┐      │
-                            │  │ Controllers  │      │
-                            │  │ loginUser()  │      │
-                            │  └─────┬────────┘      │
-                            │        │               │
-                            │        ▼               │
-                            │   ┌───────────┐        │
-                            │   │  Redis    │        │
-                            │   │ (OTP +    │        │
-                            │   │ RateLimit)│        │
-                            │   └───────────┘        │
-                            │        │               │
-                            │        ▼               │
-                            │  ┌─────────────────┐   │
-                            │  │ RabbitMQ        │   │
-                            │  │ Queue: send-otp │   │
-                            │  └─────────────────┘   │
-                            └────────────────────────┘
-                                        │
-                                        ▼
-                            ┌────────────────────────┐
-                            │     MAIL SERVICE       │
-                            │                        │
-                            │                        │
-                            │  ┌─────────────────┐   │
-                            │  │   RabbitMQ      │   │
-                            │  │   Consumer      │   │
-                            │  └─────┬───────────┘   │
-                            │        │               │
-                            │        ▼               │
-                            │  ┌─────────────────┐   │
-                            │  │ Nodemailer /    │   │
-                            │  │ SMTP Provider   │   │
-                            │  └─────────────────┘   │
-                            │        │               │
-                            │        ▼               │
-                            │     User Email         │
-                            └────────────────────────┘
-
-
-### **Step-by-Step Flow (Very Important)**
-
-**1. User requests login:**
-
-Frontend → POST /api/v1/login
-
-`Body: { email }`
-
-**2. User Service starts processing:**
-
- **Rate limiting (Redis)**
-
-otp:ratelimit:user@gmail.com
-
-* If exists → reject request  
-* If not → continue
-
-Why Redis?
-
-* Ultra fast  
-* Auto-expiry  
-* Stateless service design
-
-**3. OTP generation & storage (Redis again):**
-
-otp:user@gmail.com → 123456(random 6 digit OTP) (expires in 5 min)
-
-Redis is used because:
-
-* OTP is temporary  
-* No DB writes  
-* Auto cleanup  
-* High performance
-
-**4. Event creation (User Service → RabbitMQ):**
-
-User Service **does NOT send email**
-Instead, it publishes an event in rabbitMQ:
-
-            {
-
-            "to": "user@gmail.com",
-
-            "subject": "Your OTP Code",
-
-            "body": "Your OTP code is 482931"
-
-            }
-
-Sent to:
-
-RabbitMQ Queue → send-otp
-
- **Why RabbitMQ here?**
-
-* Async processing  
-* Loose coupling  
-* Retry support  
-* Backpressure handling
-
-**5. Mail Service consumes the message**
-
-Mail Service has a **consumer**:
-
-send-otp queue → mail-service consumer
-
-Flow:
-
-1. Consume message  
-2. Parse JSON  
-3. Send email via SMTP / Nodemailer  
-4. Acknowledge message
-
-If mail service crashes:
-
-* Message stays in queue  
-* No OTP lost
-
-This is **fault tolerant**.
-
-**6. User Service responds immediately**
-
-User doesn’t wait for email to send:
-
-        {
-
-        "message": "OTP has been sent to your email"
-
-        }
-
-
-**User Service Responsibilities:**
-
-\- OTP-based login  
-\- Rate limiting using Redis  
-\- Temporary OTP storage  
-\- Publishing OTP email events to RabbitMQ
-
-**Mail Service Responsibilities:**
-
-\- Consume messages from RabbitMQ  
-\- Send emails using SMTP / Nodemailer  
-\- Handle retries and failures independently
+Ping's backend is split into **three core microservices** to ensure modularity, high availability, and efficient resource allocation.
 
 ---
 
-**Tech Stack:**
+## **Subservices Overview**
 
-- Node.js  
-- Express.js  
-- TypeScript  
-- RabbitMQ  
-- Redis  
-- Nodemailer
-- Cloudinary
----
+### **1. User Service**
 
-## **Environment Variables:**
+- **Role**: Core authentication and profile management.
+- **Workflow**:
+  - Validates user emails.
+  - Generates 6-digit OTPs using **Redis** for TTL (5-min expiry).
+  - Implements dynamic **rate-limiting** to prevent spam.
+  - Publishes `send-otp` events to **RabbitMQ**.
 
-### *User Service (\`.env\`)*
+### **2. Mail Service**
 
-PORT=  
-MONGO\_URI=  
-REDIS\_URL=
+- **Role**: Asynchronous, fault-tolerant email delivery.
+- **Workflow**:
+  - Consumes events from the RabbitMQ `send-otp` queue.
+  - Dispatches emails via **Nodemailer** using SMTP Providers.
+  - Ensures no OTP mission is lost even if the mail server is temporarily down (Backpressure).
 
-// RabbitMQ Configuration  
-RABBITMQ\_HOST=  
-RABBITMQ\_PORT=  
-RABBITMQ\_USER=  
-RABBITMQ\_PASSWORD=
+### **3. Chat Service**
 
-### *Mail Service (\`.env\`)*
-
-PORT=  
-REDIS\_URL=
-
-// RabbitMQ Configuration  
-RABBITMQ\_HOST=  
-RABBITMQ\_PORT=  
-RABBITMQ\_USER=  
-RABBITMQ\_PASSWORD=
-
-// SMTP Configuration  
-EMAIL\_USER=  
-EMAIL\_PASSWORD=
+- **Role**: Real-time messaging hub and persistent history.
+- **Workflow**:
+  - Manages persistent **Socket.IO** connections for live messaging.
+  - Tracks user presence ("Online/Offline") globally.
+  - Handles "Seen/Unseen" status updates in real-time.
+  - Manages chat history persistence with **MongoDB**.
+  - Implements logic for "Clear History" (Delete for me vs. Delete for both).
+  - Securely stores images via **Cloudinary**.
 
 ---
 
-## **Running the Services:**
+## **Data Flow & Infrastructure**
 
-**1. Start RabbitMQ**  
+1. **Redis**: Primary caching and TTL layer for security (OTP/Rate-limit).
+2. **RabbitMQ**: The project's event bus, decoupling Auth and Mail logic.
+3. **MongoDB**: Secure, horizontally scalable storage for users and chats.
+4. **Cloudinary**: Object storage for media assets (images/avatars).
+
+---
+
+## **Directory Structure**
+
 ```bash
-docker run -d \
---hostname rabbitmq-host \
---name rabbitmq-container \
--e RABBITMQ_DEFAULT_USER=admin \
--e RABBITMQ_DEFAULT_PASS=admin123 \
--p 5672:5672 \
--p 15672:15672 \ rabbitmq:3-management
+BACKEND/
+├── user-service/  # AuthLogic, JWT, Redis rate-limiter, OTP publishing
+├── mail-service/  # RabbitMQ consumers, Nodemailer integrations
+└── chat-service/  # Socket.IO, Chat models, Message deletion logic
 ```
 
-- RabbitMQ UI:  
-```bash
- [http://localhost:15672](http://localhost:15672/)
- ```
+---
 
+## **Environment Variables Setup**
 
-**2. Start User Service**
+Create a `.env` in each service's root based on the following templates:
 
-cd user-service  
-npm install  
-npm run dev
+### **User Service**
 
-**3. Start Mail Service**
+```env
+PORT=
+MONGO_URI=
+REDIS_URL=
+JWT_SECRET=
+RABBITMQ_URL=
+```
 
-cd mail-service  
-npm install  
-npm run dev
+### **Mail Service**
+
+```env
+PORT=
+RABBITMQ_URL=
+EMAIL_USER=
+EMAIL_PASSWORD=
+```
+
+### **Chat Service**
+
+```env
+PORT=
+MONGO_URI=
+USER_SERVICE_URL=
+CLOUDINARY_CLOUD_NAME=
+CLOUDINARY_API_KEY=
+CLOUDINARY_API_SECRET=
+```
+
+---
+
+## **Running Backend Locally**
+
+1. **Dockerized Deps**:
+
+   ```bash
+   docker run -d --name rabbitmq-container -p 5672:5672 -p 15672:15672 rabbitmq:3-management
+   docker run -d --name redis-container -p 6379:6379 redis
+   ```
+
+2. **Run All Services**:
+   In separate terminals:
+   ```bash
+   cd user-service && npm run dev
+   cd mail-service && npm run dev
+   cd chat-service && npm run dev
+   ```
+
+---
+
+_Backend designed for speed and reliability._
