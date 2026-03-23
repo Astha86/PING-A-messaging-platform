@@ -1,6 +1,6 @@
 # **Ping – A Modern Microservices Chat Platform**
 
-Ping is a scalable, real-time messaging platform designed with a high-performance **microservices architecture**. It features a stunning, responsive UI and focuses on speed, privacy, and seamless user experience.
+Ping is a scalable, real-time messaging platform designed with a high-performance **microservices architecture**, leveraging **TypeScript** across the entire stack to ensure robust type security. It features a stunning, responsive UI and focuses on speed, privacy, and seamless user experience.
 
 ---
 
@@ -48,6 +48,9 @@ Ping is built on the principle of **event-driven microservices** to ensure maxim
 - **Redis** (Caching & TTL)
 - **MongoDB** (Primary Database)
 - **Cloudinary** (Image Storage)
+- **Nodemailer** (Email Service)
+- **Multer** (File Upload Middleware)
+- **JWT** (JSON Web Tokens)
 
 ---
 

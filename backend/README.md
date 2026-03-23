@@ -47,6 +47,19 @@ Ping's backend is split into **three core microservices** to ensure modularity, 
 
 ---
 
+## **Tech Stack**
+- **Node.js & TypeScript**
+- **Express.js**
+- **RabbitMQ** (Message Broker)
+- **Redis** (Caching & TTL)
+- **MongoDB** (Primary Database)
+- **Cloudinary** (Image Storage)
+- **Nodemailer** (Email Service)
+- **Multer** (File Upload Middleware)
+- **JWT** (JSON Web Tokens)
+
+---
+
 ## **Directory Structure**
 
 ```bash
@@ -68,15 +81,30 @@ Create a `.env` in each service's root based on the following templates:
 PORT=
 MONGO_URI=
 REDIS_URL=
+
+# RabbitMQ Configuration
+RABBITMQ_HOST=
+RABBITMQ_PORT=
+RABBITMQ_USER=
+RABBITMQ_PASSWORD=
+
+# JWT Configuration
 JWT_SECRET=
-RABBITMQ_URL=
 ```
 
 ### **Mail Service**
 
 ```env
 PORT=
-RABBITMQ_URL=
+REDIS_URL=
+
+# RabbitMQ Configuration
+RABBITMQ_HOST=
+RABBITMQ_PORT=
+RABBITMQ_USER=
+RABBITMQ_PASSWORD=
+
+# SMTP Configuration
 EMAIL_USER=
 EMAIL_PASSWORD=
 ```
@@ -87,6 +115,11 @@ EMAIL_PASSWORD=
 PORT=
 MONGO_URI=
 USER_SERVICE_URL=
+
+# JWT Configuration
+JWT_SECRET=
+
+# Cloudinary Configuration
 CLOUDINARY_CLOUD_NAME=
 CLOUDINARY_API_KEY=
 CLOUDINARY_API_SECRET=
