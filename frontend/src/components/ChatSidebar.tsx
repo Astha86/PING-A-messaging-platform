@@ -34,8 +34,7 @@ const ChatSidebar = ({
     const [searchQuery, setsearchQuery] = useState("");
 
     return (
-        <aside className={`fixed z-20 sm:static top-0 left-0 h-screen w-80 bg-black border-r border-white/[0.05] transform ${sidebarOpen ? "translate-x-0" : "-translate-x-full"
-            } sm:translate-x-0 transition-all duration-300 flex flex-col`}>
+        <aside className="w-full h-full bg-black flex flex-col transition-all duration-300 overflow-hidden">
 
             {/* Header */}
             <div className="p-6 space-y-6">
@@ -175,8 +174,8 @@ const ChatSidebar = ({
                         <div className="w-9 h-9 bg-gradient-to-br from-indigo-500 to-purple-500 rounded-xl flex items-center justify-center font-bold text-white text-xs">
                             {getInitials(loggedInUser?.name)}
                         </div>
-                        <div className="hidden lg:block overflow-hidden">
-                            <p className="text-xs font-bold text-white truncate max-w-[80px]">
+                        <div className="overflow-hidden">
+                            <p className="text-xs font-bold text-white truncate max-w-[120px]">
                                 {formatName(loggedInUser?.name)}
                             </p>
                             <span className="text-[10px] font-medium text-emerald-500">Active now</span>

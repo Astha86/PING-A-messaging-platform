@@ -56,22 +56,24 @@ const ChatApp = () => {
         <div className="absolute bottom-[10%] left-[30%] w-[30%] h-[30%] bg-purple-600/5 blur-[120px] rounded-full" />
       </div>
 
-      <ChatSidebar
-        sidebarOpen={sidebarOpen}
-        setSidebarOpen={setSidebarOpen}
-        showAllUsers={showAllUser}
-        setShowAllUsers={setshowAllUser}
-        users={users}
-        loggedInUser={loggedInUser}
-        chats={chats}
-        selectedUser={selectedUser}
-        setSelectedUser={setSelectedUser}
-        handleLogout={handleLogout}
-        onlineUsers={onlineUsers}
-      />
+      <div className={`${selectedUser ? 'hidden sm:flex' : 'flex'} w-full sm:w-80 h-full`}>
+        <ChatSidebar
+          sidebarOpen={sidebarOpen}
+          setSidebarOpen={setSidebarOpen}
+          showAllUsers={showAllUser}
+          setShowAllUsers={setshowAllUser}
+          users={users}
+          loggedInUser={loggedInUser}
+          chats={chats}
+          selectedUser={selectedUser}
+          setSelectedUser={setSelectedUser}
+          handleLogout={handleLogout}
+          onlineUsers={onlineUsers}
+        />
+      </div>
 
       {/* Main Chat Area */}
-      <main className="flex-1 flex flex-col relative z-30">
+      <main className={`flex-1 flex flex-col relative z-30 h-full ${selectedUser ? 'flex' : 'hidden sm:flex'}`}>
         {!selectedUser ? (
           <EmptyChat />
         ) : (

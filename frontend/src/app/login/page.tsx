@@ -1,7 +1,7 @@
 'use client';
 
 import AppContext, { user_service } from '@/src/context/AppContext';
-import { ArrowRight, Loader2, Mail, MessageCircle } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Loader2, Mail, MessageCircle } from 'lucide-react';
 import { redirect, useRouter } from 'next/navigation';
 import React, { useContext, useState } from 'react';
 import axios from 'axios';
@@ -40,7 +40,18 @@ const LoginPage = () => {
     }
 
     return (
-        <div className="min-h-screen bg-black text-white flex items-center justify-center p-6 relative overflow-hidden">
+        <div className="min-h-screen bg-[#050505] text-white flex items-center justify-center p-6 relative overflow-hidden">
+            {/* Back Button */}
+            <button 
+                onClick={() => router.push('/')} 
+                className="absolute top-6 left-6 p-4 text-neutral-500 hover:text-white transition-colors cursor-pointer group z-50 bg-white/[0.03] hover:bg-white/[0.08] backdrop-blur-3xl border border-white/[0.05] rounded-2xl sm:top-10 sm:left-10"
+            >
+                <div className="flex items-center gap-2">
+                    <ArrowLeft className="w-5 h-5 group-hover:-translate-x-1 transition-transform" />
+                    <span className="hidden sm:inline text-xs font-bold tracking-widest uppercase">Back</span>
+                </div>
+            </button>
+
             {/* Background Aura */}
             <div className="absolute top-[-10%] right-[-10%] w-[50%] h-[50%] bg-indigo-600/10 blur-[120px] rounded-full animate-pulse" />
             <div className="absolute bottom-[-10%] left-[-10%] w-[50%] h-[50%] bg-purple-600/10 blur-[120px] rounded-full animate-pulse [animation-delay:1s]" />

@@ -6,6 +6,7 @@ import AppContext, { User, Chats, chat_service } from '../context/AppContext';
 import MessageHeader from './MessageHeader';
 import MessageInput from './MessageInput';
 import ClearChatModal from './ClearChatModal';
+import LoadingComponent from './Loading';
 
 interface Message {
   _id: string;
@@ -201,13 +202,18 @@ const MessageArea = ({ selectedUserId, chats, loggedInUser, onlineUsers, setSele
       {/* Messages */}
       <div
         ref={scrollRef}
-        className="flex-1 overflow-y-auto p-6 space-y-6 custom-scrollbar"
+        className="flex-1 overflow-y-auto p-6 space-y-6 custom-scrollbar relative"
       >
+        {loading && (
+          <div className="absolute inset-0 z-10 bg-black/20 backdrop-blur-[2px]">
+            <LoadingComponent fullScreen={false} />
+          </div>
+        )}
         {messages.map((msg, index) => {
           const isSender = msg.sender === loggedInUser?._id;
           return (
             <div key={msg._id} className={`flex ${isSender ? "justify-end" : "justify-start"}`}>
-              <div className={`max-w-[70%] group`}>
+              <div className={`max-w-[85%] sm:max-w-[70%] group`}>
                 <div className={`
                     p-4 rounded-2xl shadow-sm
                     ${isSender

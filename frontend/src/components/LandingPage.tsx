@@ -234,7 +234,7 @@ const LandingPage = () => {
                     </div>
                 </div>
                 <div className="max-w-7xl mx-auto pt-10 border-t border-white/[0.05] flex flex-col md:row items-center justify-between gap-6">
-                    <p className="text-xs font-medium text-neutral-600 uppercase tracking-widest">© 2024 PING INC. DESIGNED TO CONNECT.</p>
+                    <p className="text-xs font-medium text-neutral-600 uppercase tracking-widest">© {new Date().getFullYear()} PING INC. DESIGNED TO CONNECT.</p>
                     <div className="flex items-center gap-6">
                         <div className="w-1.5 h-1.5 rounded-full bg-neutral-800" />
                         <div className="w-1.5 h-1.5 rounded-full bg-neutral-800" />

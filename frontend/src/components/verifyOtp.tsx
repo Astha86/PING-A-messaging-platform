@@ -1,7 +1,7 @@
 'use client';
 
 import axios from 'axios';
-import { ArrowRight, Edit, Loader2, Lock, MessageCircle } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Edit, Loader2, Lock, MessageCircle } from 'lucide-react';
 import AppContext, { user_service } from '@/src/context/AppContext';
 import { useSearchParams, useRouter, redirect } from 'next/navigation';
 import React, { useContext, useEffect, useState } from 'react';
@@ -146,22 +146,33 @@ const VerifyOtp = () => {
   }
 
   return (
-    <div className="min-h-screen bg-black text-white flex items-center justify-center p-6 relative overflow-hidden">
+    <div className="min-h-screen bg-[#050505] text-white flex items-center justify-center p-6 relative overflow-hidden">
+      {/* Back Button */}
+      <button 
+          onClick={() => router.push('/login')} 
+          className="absolute top-6 left-6 p-4 text-neutral-500 hover:text-white transition-colors cursor-pointer group z-50 bg-white/[0.03] hover:bg-white/[0.08] backdrop-blur-3xl border border-white/[0.05] rounded-2xl sm:top-10 sm:left-10"
+      >
+          <div className="flex items-center gap-2">
+              <ArrowLeft className="w-5 h-5 group-hover:-translate-x-1 transition-transform" />
+              <span className="hidden sm:inline text-xs font-bold tracking-widest uppercase">Back</span>
+          </div>
+      </button>
+
       <div className="absolute top-[-10%] right-[-10%] w-[50%] h-[50%] bg-indigo-600/10 blur-[120px] rounded-full animate-pulse" />
       <div className="absolute bottom-[-10%] left-[-10%] w-[50%] h-[50%] bg-purple-600/10 blur-[120px] rounded-full animate-pulse [animation-delay:1s]" />
 
       <div className="max-w-md w-full relative z-10 transition-all">
-        <div className="text-center mb-12">
-          <Link href="/" className="inline-flex items-center space-x-3 group mb-12">
+        <div className="text-center mb-6 sm:mb-12">
+          <Link href="/" className="inline-flex items-center space-x-3 group mb-8 sm:mb-12">
             <div className="w-14 h-14 bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 rounded-2xl flex items-center justify-center p-[1px] group-hover:scale-105 transition-transform duration-500">
               <div className="w-full h-full bg-black rounded-[0.9rem] flex items-center justify-center">
                 <MessageCircle className="w-7 h-7 text-white" />
               </div>
             </div>
           </Link>
-          <h1 className="text-4xl font-bold mb-4 tracking-tight">Check your email</h1>
-          <p className="text-neutral-400 text-lg font-medium">
-            Enter the 6-digit code we sent to <br /> <span className="text-indigo-400 font-semibold">{email}</span>
+          <h1 className="text-3xl sm:text-4xl font-bold mb-4 tracking-tight">Check your email</h1>
+          <p className="text-neutral-400 text-base sm:text-lg font-medium px-4 sm:px-0">
+            Enter the 6-digit code we sent to <br /> <span className="text-indigo-400 font-semibold break-all">{email}</span>
           </p>
           <button
             onClick={() => router.push('/login')}
@@ -172,9 +183,9 @@ const VerifyOtp = () => {
           </button>
         </div>
 
-        <div className="bg-white/[0.03] border border-white/[0.08] backdrop-blur-2xl rounded-[2.5rem] p-10 shadow-2xl">
+        <div className="bg-white/[0.03] border border-white/[0.08] backdrop-blur-2xl rounded-[2.5rem] p-5 sm:p-10 shadow-2xl">
           <form className="space-y-10" onSubmit={handleSubmit}>
-            <div className="flex justify-between gap-3">
+            <div className="flex justify-between gap-1 sm:gap-3">
               {otp.map((digit, index) => (
                 <input
                   key={index}
@@ -187,7 +198,7 @@ const VerifyOtp = () => {
                   onChange={(e) => handleOtpChange(index, e.target.value)}
                   onKeyDown={(e) => handleOtpKeyDown(index, e)}
                   onPaste={handlePaste}
-                  className="w-12 h-16 md:w-14 md:h-16 text-center text-3xl font-bold bg-white/[0.02] border border-white/[0.1] rounded-2xl text-white focus:outline-none focus:border-indigo-500/50 focus:bg-white/[0.04] transition-all"
+                  className="w-10 h-14 sm:w-14 sm:h-16 text-center text-2xl sm:text-3xl font-bold bg-white/[0.02] border border-white/[0.1] rounded-2xl text-white focus:outline-none focus:border-indigo-500/50 focus:bg-white/[0.04] transition-all"
                 />
               ))}
             </div>
@@ -199,11 +210,8 @@ const VerifyOtp = () => {
             )}
 
             {isLoading && (
-              <div className="flex flex-col items-center justify-center space-y-4 py-4 animate-in fade-in zoom-in duration-300">
-                <Loader2 className="animate-spin text-indigo-500" size={40} />
-                <p className="text-sm font-bold text-indigo-400 uppercase tracking-widest animate-pulse">
-                  Authenticating...
-                </p>
+              <div className="py-4 animate-in fade-in zoom-in duration-300">
+                <Loading fullScreen={false} />
               </div>
             )}
           </form>
