@@ -21,6 +21,7 @@ interface Message {
   seen: boolean;
   seenAt?: string;
   createdAt: string;
+  isOptimistic?: boolean;
 }
 
 interface MessageAreaProps {
@@ -38,6 +39,9 @@ const MessageArea = ({ selectedUserId, chats, loggedInUser, onlineUsers, setSele
   const [showClearModal, setShowClearModal] = useState(false);
   const [deleteForBoth, setDeleteForBoth] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [selectedImage, setSelectedImage] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [isSending, setIsSending] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const pickerRef = useRef<HTMLDivElement>(null);
   const { socket } = useSocketContext();
@@ -82,7 +86,7 @@ const MessageArea = ({ selectedUserId, chats, loggedInUser, onlineUsers, setSele
         socket.off("messagesSeen");
       };
     }
-  }, [socket, chatId, fetchChats]);
+  }, [socket, chatId, fetchChats, loggedInUser?._id]);
 
   // Fetch messages when chat changes
   useEffect(() => {
@@ -135,13 +139,40 @@ const MessageArea = ({ selectedUserId, chats, loggedInUser, onlineUsers, setSele
 
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newMessage.trim()) return;
+    if (isSending || (!newMessage.trim() && !selectedImage)) return;
+
+    setIsSending(true);
+
+    // Capture current input values
+    const textToSend = newMessage;
+    const imageToSend = selectedImage;
+    const previewToSend = imagePreview;
+
+    // Clear input immediately for better UX
+    setNewMessage("");
+    setSelectedImage(null);
+    setImagePreview(null);
+    setShowEmojiPicker(false);
+
+    // Create optimistic message
+    const tempId = `temp-${Date.now()}`;
+    const optimisticMsg: Message = {
+      _id: tempId,
+      chatId: chatId || "pending",
+      sender: loggedInUser?._id || "",
+      text: textToSend,
+      image: previewToSend ? { url: previewToSend, publicId: "temp" } : undefined,
+      messageType: imageToSend ? 'image' : 'text',
+      seen: false,
+      createdAt: new Date().toISOString(),
+      isOptimistic: true
+    };
+
+    setMessages(prev => [...prev, optimisticMsg]);
 
     try {
       const token = Cookies.get("token");
 
-      // If no chat exists yet, we should create one first or the backend handles it via receiverId
-      // Our backend sendMessage needs chatId. Let's handle chat creation if chatId is missing.
       let currentChatId = chatId;
       if (!currentChatId) {
         const { data: newChatData } = await axios.post(`${chat_service}/api/v1/chat/new`,
@@ -149,20 +180,39 @@ const MessageArea = ({ selectedUserId, chats, loggedInUser, onlineUsers, setSele
           { headers: { Authorization: `Bearer ${token}` } }
         );
         currentChatId = newChatData.chatId;
-        await fetchChats(); // Update chats list in AppContext
+        await fetchChats();
       }
 
+      const formData = new FormData();
+      if (currentChatId) formData.append("chatId", currentChatId);
+      if (textToSend.trim()) formData.append("text", textToSend);
+      if (imageToSend) formData.append("image", imageToSend);
+
       const { data } = await axios.post(`${chat_service}/api/v1/chat/send`,
-        { chatId: currentChatId, text: newMessage },
-        { headers: { Authorization: `Bearer ${token}` } }
+        formData,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "multipart/form-data"
+          }
+        }
       );
 
-      setMessages(prev => [...prev, data.data]);
-      setNewMessage("");
-      setShowEmojiPicker(false);
+      // Replace optimistic message with actual data from server
+      setMessages(prev => prev.map(m => m._id === tempId ? data.data : m));
       fetchChats();
     } catch (error) {
       console.error("Error sending message:", error);
+      // Remove optimistic message on error
+      setMessages(prev => prev.filter(m => m._id !== tempId));
+      // Restore input values
+      setNewMessage(textToSend);
+      if (imageToSend) {
+        setSelectedImage(imageToSend);
+        setImagePreview(previewToSend);
+      }
+    } finally {
+      setIsSending(false);
     }
   };
 
@@ -215,21 +265,40 @@ const MessageArea = ({ selectedUserId, chats, loggedInUser, onlineUsers, setSele
             <div key={msg._id} className={`flex ${isSender ? "justify-end" : "justify-start"}`}>
               <div className={`max-w-[85%] sm:max-w-[70%] group`}>
                 <div className={`
-                    p-4 rounded-2xl shadow-sm
+                    p-4 rounded-2xl shadow-sm overflow-hidden relative
                     ${isSender
                     ? "bg-indigo-600 text-white rounded-br-none"
                     : "bg-white/[0.03] border border-white/[0.06] text-neutral-200 rounded-bl-none"
                   }
                 `}>
-                  <p className="text-sm leading-relaxed">{msg.text}</p>
+                  {msg.isOptimistic && (
+                    <div className="absolute inset-0 bg-black/20 backdrop-blur-[1px] flex items-center justify-center z-10 transition-all duration-300">
+                      <div className="w-5 h-5 border-2 border-white/20 border-t-white rounded-full animate-spin" />
+                    </div>
+                  )}
+                  {msg.image && (
+                    <div className="mb-2 rounded-xl overflow-hidden bg-black/20">
+                      <img
+                        src={msg.image.url}
+                        alt="attachment"
+                        className={`max-w-full h-auto object-contain hover:scale-105 transition-transform duration-500 ${msg.isOptimistic ? 'blur-[2px] grayscale-[0.2]' : ''}`}
+                        onLoad={() => {
+                          if (scrollRef.current) {
+                            scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+                          }
+                        }}
+                      />
+                    </div>
+                  )}
+                  {msg.text && <p className="text-sm leading-relaxed">{msg.text}</p>}
                 </div>
                 <div className={`flex items-center mt-2 gap-2 ${isSender ? "justify-end" : "justify-start"}`}>
                   <span className="text-[10px] text-neutral-600 font-medium">
                     {new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                   </span>
                   {isSender && (
-                    <span className="text-[10px] text-indigo-500 font-bold">
-                      {msg.seen ? "Read" : "Sent"}
+                    <span className="text-[10px] text-indigo-500 font-bold italic">
+                      {msg.isOptimistic ? "Sending..." : (msg.seen ? "Read" : "Sent")}
                     </span>
                   )}
                 </div>
@@ -248,6 +317,10 @@ const MessageArea = ({ selectedUserId, chats, loggedInUser, onlineUsers, setSele
         setShowEmojiPicker={setShowEmojiPicker}
         pickerRef={pickerRef}
         handleEmojiClick={handleEmojiClick}
+        setSelectedImage={setSelectedImage}
+        imagePreview={imagePreview}
+        setImagePreview={setImagePreview}
+        isSending={isSending}
       />
 
       {showClearModal && (

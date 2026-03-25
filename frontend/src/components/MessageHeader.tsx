@@ -26,7 +26,7 @@ const MessageHeader = ({ selectedUser, isOnline, setSelectedUser, onOpenClearMod
   }, []);
 
   return (
-    <div className="h-20 border-b border-white/[0.05] flex items-center justify-between px-6 bg-black/40 backdrop-blur-md shrink-0">
+    <div className="h-20 border-b border-white/[0.05] flex items-center justify-between px-6 bg-black/40 backdrop-blur-md shrink-0 z-40 relative">
       <div className="flex items-center gap-4">
         <button 
           className="p-2 -ml-2 text-neutral-400 hover:text-white transition-colors cursor-pointer sm:hidden"
