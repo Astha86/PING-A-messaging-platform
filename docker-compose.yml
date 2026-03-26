@@ -1,0 +1,116 @@
+services:
+  # Caching Layer
+  redis:
+    image: redis:alpine
+    container_name: ping-redis
+    ports:
+      - "6379:6379"
+    networks:
+      - ping-network
+
+  # Message Broker
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: ping-rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      RABBITMQ_DEFAULT_USER: admin
+      RABBITMQ_DEFAULT_PASS: admin123
+    networks:
+      - ping-network
+
+  # Main Database (MongoDB)
+  mongodb:
+    image: mongo:latest
+    container_name: ping-mongo
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo-data:/data/db
+    networks:
+      - ping-network
+
+  # Backend Services
+  user-service:
+    build:
+      context: ./backend/user-service
+      dockerfile: Dockerfile
+    container_name: ping-user-service
+    ports:
+      - "3001:3001"
+    environment:
+      PORT: 3001
+      MONGO_URI: mongodb://mongodb:27017/ping-users
+      REDIS_URL: redis://redis:6379
+      RABBITMQ_URL: amqp://admin:admin123@rabbitmq:5672
+      JWT_SECRET: your_jwt_secret
+    depends_on:
+      - mongodb
+      - redis
+      - rabbitmq
+    networks:
+      - ping-network
+
+  mail-service:
+    build:
+      context: ./backend/mail-service
+      dockerfile: Dockerfile
+    container_name: ping-mail-service
+    ports:
+      - "3002:3002"
+    environment:
+      PORT: 3002
+      RABBITMQ_URL: amqp://admin:admin123@rabbitmq:5672
+      EMAIL_USER: your_smtp_email
+      EMAIL_PASSWORD: your_smtp_password
+    depends_on:
+      - rabbitmq
+    networks:
+      - ping-network
+
+  chat-service:
+    build:
+      context: ./backend/chat-service
+      dockerfile: Dockerfile
+    container_name: ping-chat-service
+    ports:
+      - "3003:3003"
+    environment:
+      PORT: 3003
+      MONGO_URI: mongodb://mongodb:27017/ping-chats
+      USER_SERVICE_URL: http://user-service:3001
+      JWT_SECRET: your_jwt_secret
+      CLOUDINARY_CLOUD_NAME: your_cloud_name
+      CLOUDINARY_API_KEY: your_api_key
+      CLOUDINARY_API_SECRET: your_api_secret
+    depends_on:
+      - mongodb
+      - user-service
+    networks:
+      - ping-network
+
+  # Frontend
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: ping-frontend
+    ports:
+      - "3000:3000"
+    environment:
+      NEXT_PUBLIC_USER_SERVICE_URL: http://localhost:3001
+      NEXT_PUBLIC_CHAT_SERVICE_URL: http://localhost:3003
+    depends_on:
+      - user-service
+      - chat-service
+    networks:
+      - ping-network
+
+networks:
+  ping-network:
+    driver: bridge
+
+volumes:
+  mongo-data:

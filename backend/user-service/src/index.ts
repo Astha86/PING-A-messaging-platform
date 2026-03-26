@@ -19,12 +19,19 @@ app.use("/api/v1", userRoutes);
 const port = process.env.PORT || 3000;
 
 const start = async () => {
+  try {
     await connectDb();
     await connectRabbitMQ();
     await connectRedis();
+
     app.listen(port, () => {
-        console.log(`User Service is running on port: ${port}`);
+      console.log(`User Service is running on port: ${port}`);
     });
+
+  } catch (error) {
+    console.error("Startup error :", error);
+    process.exit(1);
+  }
 };
 
 start();

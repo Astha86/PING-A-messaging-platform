@@ -5,8 +5,8 @@ import React, { createContext, ReactNode, useContext, useEffect, useState } from
 import axios from "axios";
 import toast, { Toaster } from "react-hot-toast";
 
-export const user_service = "http://localhost:8081";
-export const chat_service = "http://localhost:5002";
+export const user_service = process.env.NEXT_PUBLIC_USER_SERVICE_URL || "http://localhost:8081";
+export const chat_service = process.env.NEXT_PUBLIC_CHAT_SERVICE_URL || "http://localhost:5002";
 
 export interface User {
     _id: string;
