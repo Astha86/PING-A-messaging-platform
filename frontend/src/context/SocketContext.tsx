@@ -26,7 +26,7 @@ export const useSocketContext = () => {
 export const SocketProvider = ({ children }: ProviderProps) => {
     const [socket, setSocket] = useState<Socket | null>(null);
     const [onlineUsers, setOnlineUsers] = useState<string[]>([]);
-    const { user, isAuth } = useContext(AppContext)!;
+    const { user, isAuth, fetchChats } = useContext(AppContext)!;
 
     useEffect(() => {
         if (isAuth && user) {
@@ -42,6 +42,16 @@ export const SocketProvider = ({ children }: ProviderProps) => {
                 setOnlineUsers(users);
             });
 
+            // when a new message is received
+            newSocket.on("newMessage", (msg: any) => {
+                fetchChats();
+            });
+
+            // when a message is seen
+            newSocket.on("messagesSeen", ({ chatId }: { chatId: string }) => {
+                fetchChats();
+            });
+
             return () => {
                 newSocket.close();
             };
@@ -51,7 +61,7 @@ export const SocketProvider = ({ children }: ProviderProps) => {
                 setSocket(null);
             }
         }
-    }, [isAuth, user]);
+    }, [isAuth, user, fetchChats]);
 
     return (
         <SocketContext.Provider value={{ socket, onlineUsers }}>

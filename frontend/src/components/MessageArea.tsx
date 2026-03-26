@@ -7,6 +7,7 @@ import MessageHeader from './MessageHeader';
 import MessageInput from './MessageInput';
 import ClearChatModal from './ClearChatModal';
 import LoadingComponent from './Loading';
+import ImageModal from './ImageModal';
 
 interface Message {
   _id: string;
@@ -42,6 +43,7 @@ const MessageArea = ({ selectedUserId, chats, loggedInUser, onlineUsers, setSele
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [isSending, setIsSending] = useState(false);
+  const [previewImage, setPreviewImage] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const pickerRef = useRef<HTMLDivElement>(null);
   const { socket } = useSocketContext();
@@ -55,9 +57,13 @@ const MessageArea = ({ selectedUserId, chats, loggedInUser, onlineUsers, setSele
   useEffect(() => {
     if (socket) {
       socket.on("newMessage", (msg: Message) => {
-        // Only add if it belongs to current chat
-        if (msg.chatId === chatId) {
-          setMessages(prev => [...prev, msg]);
+        // Add if it belongs to current chat or is from the selected user (for new chats)
+        if (msg.chatId === chatId || msg.sender === selectedUserId) {
+          setMessages(prev => {
+            // Avoid duplicate messages if chatId synchronization is fast
+            if (prev.find(m => m._id === msg._id)) return prev;
+            return [...prev, msg];
+          });
 
           // If we are currently looking at this chat, we instantly saw the message.
           // Notify the backend so the sender gets the "Read" status updated in real-time.
@@ -173,6 +179,8 @@ const MessageArea = ({ selectedUserId, chats, loggedInUser, onlineUsers, setSele
     try {
       const token = Cookies.get("token");
 
+      // If no chat exists yet, we should create one first or the backend handles it via receiverId
+      // Our backend sendMessage needs chatId. Let's handle chat creation if chatId is missing.
       let currentChatId = chatId;
       if (!currentChatId) {
         const { data: newChatData } = await axios.post(`${chat_service}/api/v1/chat/new`,
@@ -180,7 +188,7 @@ const MessageArea = ({ selectedUserId, chats, loggedInUser, onlineUsers, setSele
           { headers: { Authorization: `Bearer ${token}` } }
         );
         currentChatId = newChatData.chatId;
-        await fetchChats();
+        await fetchChats(); // Update chats list in AppContext
       }
 
       const formData = new FormData();
@@ -281,7 +289,8 @@ const MessageArea = ({ selectedUserId, chats, loggedInUser, onlineUsers, setSele
                       <img
                         src={msg.image.url}
                         alt="attachment"
-                        className={`max-w-full h-auto object-contain hover:scale-105 transition-transform duration-500 ${msg.isOptimistic ? 'blur-[2px] grayscale-[0.2]' : ''}`}
+                        className={`max-w-full h-auto object-contain hover:scale-105 transition-transform duration-500 cursor-pointer ${msg.isOptimistic ? 'blur-[2px] grayscale-[0.2]' : ''}`}
+                        onClick={() => !msg.isOptimistic && setPreviewImage(msg.image?.url || null)}
                         onLoad={() => {
                           if (scrollRef.current) {
                             scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
@@ -334,6 +343,13 @@ const MessageArea = ({ selectedUserId, chats, loggedInUser, onlineUsers, setSele
             handleClearChat();
             setDeleteForBoth(false);
           }}
+        />
+      )}
+
+      {previewImage && (
+        <ImageModal 
+          imageUrl={previewImage} 
+          onClose={() => setPreviewImage(null)} 
         />
       )}
     </div>

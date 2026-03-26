@@ -58,7 +58,7 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
     const [loading, setLoading] = useState<boolean>(true);
     const [isAuth, setIsAuth] = useState<boolean>(false);
 
-    async function fetchUser() {
+    const fetchUser = React.useCallback(async () => {
         try {
             const token = Cookies.get("token");
             if (!token) {
@@ -82,7 +82,7 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
             console.error("Error fetching user:", error);
             setLoading(false);
         }
-    }
+    }, []);
 
     async function logout() {
         try {
@@ -96,7 +96,7 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
     }
 
     const [chats, setChats] = useState<Chats[] | null>([]);
-    async function fetchChats() {
+    const fetchChats = React.useCallback(async () => {
         try {
             const token = Cookies.get("token");
             if (!token) {
@@ -114,10 +114,10 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
         } catch (error) {
             console.error("Error fetching chats:", error);
         }
-    }
+    }, []);
 
     const [users, setUsers] = useState<User[]>([]);
-    async function fetchUsers() {
+    const fetchUsers = React.useCallback(async () => {
         try {
             const token = Cookies.get("token");
             if (!token) {
@@ -135,7 +135,7 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
         } catch (error) {
             console.error("Error fetching users:", error);
         }
-    }
+    }, []);
 
     useEffect(() => {
         fetchUser();

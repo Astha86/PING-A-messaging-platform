@@ -74,7 +74,9 @@ export const getChats = TryCatch(async (req: IAuthRequest, res) => {
     // Format the latest message to be sent to the frontend
     const formattedLatestMessage = actualLatestMessage ? {
         sender: actualLatestMessage.sender,
-        text: actualLatestMessage.messageType === "image" ? "📷 Image" : actualLatestMessage.text
+        text: actualLatestMessage.messageType === "image" 
+            ? (actualLatestMessage.text ? `📷 ${actualLatestMessage.text}` : "📷 Image") 
+            : actualLatestMessage.text
     } : null;
     
     try {
@@ -188,7 +190,7 @@ export const sendMessage = TryCatch(async (req: IAuthRequest, res) => {
     const message = new Messages(messageData);
     const savedMessage = await message.save();
 
-    const latestMessage = image ? "📷 Image" : text;
+    const latestMessage = image ? (text ? `📷 ${text}` : "📷 Image") : text;
     await Chat.findByIdAndUpdate(chatId, {
         latestMessage: {
             sender: senderId,
