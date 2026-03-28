@@ -51,8 +51,8 @@ const MessageHeader = ({ selectedUser, isOnline, setSelectedUser, onOpenClearMod
       </div>
 
       <div className="flex items-center gap-1">
-        <button className="p-2.5 text-neutral-500 hover:text-white transition-colors"><Phone size={18} /></button>
-        <button className="p-2.5 text-neutral-500 hover:text-white transition-colors"><Video size={18} /></button>
+        {/* <button className="p-2.5 text-neutral-500 hover:text-white transition-colors"><Phone size={18} /></button>
+        <button className="p-2.5 text-neutral-500 hover:text-white transition-colors"><Video size={18} /></button> */}
         
         <div className="relative" ref={menuRef}>
           <button 
