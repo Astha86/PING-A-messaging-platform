@@ -54,30 +54,39 @@ Ping is built on the principle of **event-driven microservices** to ensure maxim
 
 ---
 
-## **Getting Started**
+## **Getting Started & Deployment**
 
 ### **1. Prerequisites**
 
 Ensure you have the following installed:
 
 - Node.js (v18+)
-- Docker (for RabbitMQ)
+- Docker & Docker Compose
 - MongoDB (Atlas or local)
 
-### **2. Infrastructure Setup**
+### **2. Setup Environment Variables**
 
-Run the RabbitMQ via Docker:
-
-```bash
-docker run -d --name rabbitmq-container -p 5672:5672 -p 15672:15672 rabbitmq:3-management
-```
-
-### **3. Start Services**
-
+Before running the containers, ensure you have the appropriate `.env` files set up in your subdirectories.
 Refer to the README in each subdirectory for specific environment variable configurations:
 
 - [Backend In-Detailed Design](./backend/README.md)
 - [Frontend In-Detailed Design](./frontend/README.md)
+
+### **3. Run with Docker Compose**
+
+The entire Ping ecosystem (Frontend, User Service, Mail Service, Chat Service, Redis, RabbitMQ, and Local MongoDB) can be spun up using Docker Compose:
+
+```bash
+# Build and run all services in detached mode
+docker-compose up --build -d
+```
+
+Once running, all the applications will be accessible.
+
+To stop the services, simply run:
+```bash
+docker-compose down
+```
 
 ---
 

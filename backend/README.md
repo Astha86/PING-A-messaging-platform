@@ -83,10 +83,7 @@ MONGO_URI=
 REDIS_URL=
 
 # RabbitMQ Configuration
-RABBITMQ_HOST=
-RABBITMQ_PORT=
-RABBITMQ_USER=
-RABBITMQ_PASSWORD=
+RABBITMQ_URL=
 
 # JWT Configuration
 JWT_SECRET=
@@ -99,10 +96,7 @@ PORT=
 REDIS_URL=
 
 # RabbitMQ Configuration
-RABBITMQ_HOST=
-RABBITMQ_PORT=
-RABBITMQ_USER=
-RABBITMQ_PASSWORD=
+RABBITMQ_URL=
 
 # SMTP Configuration
 EMAIL_USER=
@@ -127,17 +121,27 @@ CLOUDINARY_API_SECRET=
 
 ---
 
-## **Running Backend Locally**
+## **Deployment & Running Locally**
 
-1. **Dockerized Deps**:
+### **Option 1: Using Docker Compose (Recommended)**
+The easiest way to run the backend and its dependencies is using the global `docker-compose` setup from the project root.
 
+```bash
+cd ..
+docker-compose up --build -d
+```
+This automatically spins up Redis, RabbitMQ, MongoDB, and all 3 Node.js services.
+
+### **Option 2: Running Services Manually**
+
+1. **Dockerized Infrastructure**:
    ```bash
    docker run -d --name rabbitmq-container -p 5672:5672 -p 15672:15672 rabbitmq:3-management
    docker run -d --name redis-container -p 6379:6379 redis
    ```
 
-2. **Run All Services**:
-   In separate terminals:
+2. **Run Each Service**:
+   Open a separate terminal for each service:
    ```bash
    cd user-service && npm run dev
    cd mail-service && npm run dev

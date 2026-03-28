@@ -35,16 +35,24 @@ FRONTEND/
 
 ---
 
-## **Getting Started**
+## **Deployment & Running Locally**
 
-### **1. Installation**
+### **Option 1: Using Docker Compose**
+Run the frontend along with the entire backend ecosystem from the project root:
+```bash
+docker-compose up --build -d
+```
+The application will be accessible at `http://localhost:3000`.
 
+### **Option 2: Manual Development Mode**
+If you prefer running just the frontend manually:
+
+#### **1. Installation**
 ```bash
 npm install
 ```
 
-### **2. Start Development**
-
+#### **2. Start Development**
 ```bash
 npm run dev
 ```
