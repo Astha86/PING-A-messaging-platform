@@ -17,6 +17,7 @@ const VerifyOtp = () => {
   const [error, setError] = useState<string>("");
   const [resendLoading, setResendLoading] = useState<boolean>(false);
   const [timer, setTimer] = useState<number>(60);
+  const [showSpamNote, setShowSpamNote] = useState<boolean>(false);
   const inputRefs = React.useRef<Array<HTMLInputElement | null>>([]);
   const router = useRouter();
 
@@ -37,8 +38,14 @@ const VerifyOtp = () => {
       });
     }, 1000);
 
-    // Cleanup the interval on component unmount
-    return () => clearInterval(countdown);
+    // Show spam note after 10 seconds
+    const spamNoteTimer = setTimeout(() => setShowSpamNote(true), 10000);
+
+    // Cleanup on component unmount
+    return () => {
+      clearInterval(countdown);
+      clearTimeout(spamNoteTimer);
+    };
   }, []);
 
   const handleOtpChange = (index: number, value: string): void => {
@@ -150,7 +157,7 @@ const VerifyOtp = () => {
       {/* Back Button */}
       <button 
           onClick={() => router.push('/login')} 
-          className="absolute top-6 left-6 p-4 text-neutral-500 hover:text-white transition-colors cursor-pointer group z-50 bg-white/[0.03] hover:bg-white/[0.08] backdrop-blur-3xl border border-white/[0.05] rounded-2xl sm:top-10 sm:left-10"
+          className="absolute top-6 left-6 p-4 text-neutral-500 hover:text-white transition-colors cursor-pointer group z-50 bg-white/3 hover:bg-white/8 backdrop-blur-3xl border border-white/5 rounded-2xl sm:top-10 sm:left-10"
       >
           <div className="flex items-center gap-2">
               <ArrowLeft className="w-5 h-5 group-hover:-translate-x-1 transition-transform" />
@@ -164,7 +171,7 @@ const VerifyOtp = () => {
       <div className="max-w-md w-full relative z-10 transition-all">
         <div className="text-center mb-6 sm:mb-12">
           <Link href="/" className="inline-flex items-center space-x-3 group mb-8 sm:mb-12">
-            <div className="w-14 h-14 bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 rounded-2xl flex items-center justify-center p-[1px] group-hover:scale-105 transition-transform duration-500">
+            <div className="w-14 h-14 bg-linear-to-br from-indigo-500 via-purple-500 to-pink-500 rounded-2xl flex items-center justify-center p-px group-hover:scale-105 transition-transform duration-500">
               <div className="w-full h-full bg-black rounded-[0.9rem] flex items-center justify-center">
                 <MessageCircle className="w-7 h-7 text-white" />
               </div>
@@ -183,7 +190,7 @@ const VerifyOtp = () => {
           </button>
         </div>
 
-        <div className="bg-white/[0.03] border border-white/[0.08] backdrop-blur-2xl rounded-[2.5rem] p-5 sm:p-10 shadow-2xl">
+        <div className="bg-white/3 border border-white/8 backdrop-blur-2xl rounded-[2.5rem] p-5 sm:p-10 shadow-2xl">
           <form className="space-y-10" onSubmit={handleSubmit}>
             <div className="flex justify-between gap-1 sm:gap-3">
               {otp.map((digit, index) => (
@@ -198,7 +205,7 @@ const VerifyOtp = () => {
                   onChange={(e) => handleOtpChange(index, e.target.value)}
                   onKeyDown={(e) => handleOtpKeyDown(index, e)}
                   onPaste={handlePaste}
-                  className="w-10 h-14 sm:w-14 sm:h-16 text-center text-2xl sm:text-3xl font-bold bg-white/[0.02] border border-white/[0.1] rounded-2xl text-white focus:outline-none focus:border-indigo-500/50 focus:bg-white/[0.04] transition-all"
+                  className="w-10 h-14 sm:w-14 sm:h-16 text-center text-2xl sm:text-3xl font-bold bg-white/2 border border-white/10 rounded-2xl text-white focus:outline-none focus:border-indigo-500/50 focus:bg-white/4 transition-all"
                 />
               ))}
             </div>
@@ -216,7 +223,19 @@ const VerifyOtp = () => {
             )}
           </form>
 
-          <div className="mt-10 text-center">
+          {showSpamNote && (
+            <div className="mt-6 px-2 py-3 bg-amber-500/6 border border-amber-500/15 rounded-2xl text-center animate-in fade-in slide-in-from-bottom-2 duration-500">
+              <p className="text-amber-400/80 text-xs font-medium leading-relaxed">
+                Can't find the email? Check your{' '}
+                <span className="font-bold text-amber-400">Spam</span>{' '}
+                folder - it may have landed there.
+                <br />
+                <span className="text-neutral-500">Still not there? Use the resend option below.</span>
+              </p>
+            </div>
+          )}
+
+          <div className="mt-4 text-center">
             <p className="text-neutral-500 text-sm font-medium">
               Didn't receive the code?{' '}
               {timer > 0 ? (
