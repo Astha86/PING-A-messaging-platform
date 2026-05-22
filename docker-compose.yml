@@ -39,13 +39,13 @@ services:
       dockerfile: Dockerfile
     container_name: ping-user-service
     ports:
-      - "3001:3001"
+      - "8081:8081"
     environment:
-      PORT: 3001
+      PORT: 8081
       MONGO_URI: mongodb://mongodb:27017/ping-users
       REDIS_URL: redis://redis:6379
       RABBITMQ_URL: amqp://admin:admin123@rabbitmq:5672
-      JWT_SECRET: your_jwt_secret
+      JWT_SECRET: ${JWT_SECRET}
     depends_on:
       - mongodb
       - redis
@@ -59,12 +59,12 @@ services:
       dockerfile: Dockerfile
     container_name: ping-mail-service
     ports:
-      - "3002:3002"
+      - "5001:5001"
     environment:
-      PORT: 3002
+      PORT: 5001
       RABBITMQ_URL: amqp://admin:admin123@rabbitmq:5672
-      EMAIL_USER: your_smtp_email
-      EMAIL_PASSWORD: your_smtp_password
+      EMAIL_USER: ${EMAIL_USER}
+      EMAIL_PASSWORD: ${EMAIL_PASSWORD}
     depends_on:
       - rabbitmq
     networks:
@@ -76,15 +76,15 @@ services:
       dockerfile: Dockerfile
     container_name: ping-chat-service
     ports:
-      - "3003:3003"
+      - "5002:5002"
     environment:
-      PORT: 3003
+      PORT: 5002
       MONGO_URI: mongodb://mongodb:27017/ping-chats
-      USER_SERVICE_URL: http://user-service:3001
-      JWT_SECRET: your_jwt_secret
-      CLOUDINARY_CLOUD_NAME: your_cloud_name
-      CLOUDINARY_API_KEY: your_api_key
-      CLOUDINARY_API_SECRET: your_api_secret
+      USER_SERVICE_URL: http://localhost:8081
+      JWT_SECRET: ${JWT_SECRET}
+      CLOUDINARY_CLOUD_NAME: ${CLOUDINARY_CLOUD_NAME}
+      CLOUDINARY_API_KEY: ${CLOUDINARY_API_KEY}
+      CLOUDINARY_API_SECRET: ${CLOUDINARY_API_SECRET}
     depends_on:
       - mongodb
       - user-service
@@ -96,12 +96,15 @@ services:
     build:
       context: ./frontend
       dockerfile: Dockerfile
+      args:
+        NEXT_PUBLIC_USER_SERVICE_URL: http://localhost:8081
+        NEXT_PUBLIC_CHAT_SERVICE_URL: http://localhost:5002
     container_name: ping-frontend
     ports:
       - "3000:3000"
     environment:
-      NEXT_PUBLIC_USER_SERVICE_URL: http://localhost:3001
-      NEXT_PUBLIC_CHAT_SERVICE_URL: http://localhost:3003
+      NEXT_PUBLIC_USER_SERVICE_URL: http://localhost:8081
+      NEXT_PUBLIC_CHAT_SERVICE_URL: http://localhost:5002
     depends_on:
       - user-service
       - chat-service

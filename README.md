@@ -66,8 +66,20 @@ Ensure you have the following installed:
 
 ### **2. Setup Environment Variables**
 
-Before running the containers, ensure you have the appropriate `.env` files set up in your subdirectories.
-Refer to the README in each subdirectory for specific environment variable configurations:
+To run the application, you need to set up a `.env` file in the root directory (for local Docker Compose setup) to supply sensitive keys and credentials securely, as well as the respective `.env` files in your subdirectories if running services individually.
+
+#### **Root `.env` (for Docker Compose)**
+Create a `.env` file in the root directory of the project with the following environment variables:
+```env
+JWT_SECRET=
+EMAIL_USER=
+EMAIL_PASSWORD=
+CLOUDINARY_CLOUD_NAME=
+CLOUDINARY_API_KEY=
+CLOUDINARY_API_SECRET=
+```
+
+Refer to the README in each subdirectory for specific service-level environment variable configurations:
 
 - [Backend In-Detailed Design](./backend/README.md)
 - [Frontend In-Detailed Design](./frontend/README.md)
