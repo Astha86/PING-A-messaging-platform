@@ -73,7 +73,7 @@ Create a `.env` file in the root directory of the project with the following env
 ```env
 JWT_SECRET=
 EMAIL_USER=
-EMAIL_PASSWORD=
+SENDGRID_API_KEY=
 CLOUDINARY_CLOUD_NAME=
 CLOUDINARY_API_KEY=
 CLOUDINARY_API_SECRET=

@@ -1,5 +1,4 @@
 import amqplib from 'amqplib';
-import nodemailer from 'nodemailer';
 import dotenv from 'dotenv';
 
 dotenv.config();
@@ -33,26 +32,72 @@ export const startSendOTPConsumer = async () => {
                     try {
                         const { to, subject, body } = JSON.parse(msg.content.toString());
 
-                        // Configure your email transporter (using Gmail as an example)
-                        const transporter = nodemailer.createTransport({
-                            service: 'gmail',
-                            auth: {
-                                user: process.env.EMAIL_USER,
-                                pass: process.env.EMAIL_PASSWORD,
+                        if (!process.env.SENDGRID_API_KEY) {
+                            throw new Error('SENDGRID_API_KEY environment variable is not configured');
+                        }
+
+                        // HTML email
+                        const otpCode = body.match(/\d{4,6}/)?.[0] || body;
+                        const htmlBody = `
+                            <div style="font-family: 'Segoe UI', Arial, sans-serif; max-width: 480px; margin: 0 auto; padding: 32px; background: #ffffff;">
+                                <div style="text-align: center; margin-bottom: 24px;">
+                                    <h1 style="color: #6C63FF; font-size: 28px; margin: 0;">PING</h1>
+                                    <p style="color: #666; font-size: 14px; margin-top: 4px;">Secure Messaging Platform</p>
+                                </div>
+                                <div style="background: #f8f9fa; border-radius: 12px; padding: 24px; text-align: center;">
+                                    <p style="color: #333; font-size: 16px; margin: 0 0 16px 0;">Your verification code is:</p>
+                                    <div style="background: #6C63FF; color: #ffffff; font-size: 32px; font-weight: bold; letter-spacing: 8px; padding: 16px 24px; border-radius: 8px; display: inline-block;">
+                                        ${otpCode}
+                                    </div>
+                                    <p style="color: #999; font-size: 13px; margin: 16px 0 0 0;">This code expires in 5 minutes. Do not share it with anyone.</p>
+                                </div>
+                                <p style="color: #aaa; font-size: 12px; text-align: center; margin-top: 24px;">
+                                    If you didn't request this code, you can safely ignore this email.
+                                </p>
+                            </div>
+                        `;
+
+                        // Send email via SendGrid HTTP API
+                        const response = await fetch('https://api.sendgrid.com/v3/mail/send', {
+                            method: 'POST',
+                            headers: {
+                                'Authorization': `Bearer ${process.env.SENDGRID_API_KEY}`,
+                                'Content-Type': 'application/json'
                             },
+                            body: JSON.stringify({
+                                personalizations: [
+                                    {
+                                        to: [{ email: to }]
+                                    }
+                                ],
+                                from: {
+                                    email: process.env.EMAIL_USER || 'asthasahani08@gmail.com',
+                                    name: 'PING'
+                                },
+                                reply_to: {
+                                    email: process.env.EMAIL_USER || 'asthasahani08@gmail.com',
+                                    name: 'PING Support'
+                                },
+                                subject: subject,
+                                content: [
+                                    {
+                                        type: 'text/plain',
+                                        value: body
+                                    },
+                                    {
+                                        type: 'text/html',
+                                        value: htmlBody
+                                    }
+                                ]
+                            })
                         });
 
-                        // Email options
-                        const mailOptions = {
-                            from: "PING",
-                            to: to,
-                            subject: subject,
-                            text: body,
-                        };
+                        if (!response.ok) {
+                            const errorText = await response.text();
+                            throw new Error(`SendGrid API error: ${response.status} - ${errorText}`);
+                        }
 
-                        // Send the email
-                        await transporter.sendMail(mailOptions);
-                        console.log(`OTP email sent to ${to}`);
+                        console.log(`OTP email sent successfully to ${to} via SendGrid HTTP API`);
 
                         // Acknowledge the message
                         channel.ack(msg);
