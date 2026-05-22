@@ -7,50 +7,77 @@ dotenv.config();
 let channel: amqplib.Channel;
 
 export const startSendOTPConsumer = async () => {
-    try {
-        const connection = await amqplib.connect(process.env.RABBITMQ_URL as string);
+    const maxRetries = 10;
+    const retryDelay = 5000;
 
-        channel = await connection.createChannel();
-        const queueName = 'send-otp';
-        await channel.assertQueue(queueName, { durable: true });
-        console.log('Connected to RabbitMQ and waiting for messages in send-otp queue');
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+        try {
+            console.log(`Connecting to RabbitMQ for Send OTP Consumer... Attempt ${attempt}`);
+            const connection = await amqplib.connect(process.env.RABBITMQ_URL as string);
 
-        channel.consume(queueName, async (msg) => {
-            if (msg) {
-                try {
-                    const { to, subject, body } = JSON.parse(msg.content.toString());
+            channel = await connection.createChannel();
+            const queueName = 'send-otp';
+            await channel.assertQueue(queueName, { durable: true });
+            console.log('Connected to RabbitMQ and waiting for messages in send-otp queue');
 
-                    // Configure your email transporter (using Gmail as an example)
-                    const transporter = nodemailer.createTransport({
-                        host: 'smtp.gmail.com',
-                        port: 465,
-                        auth: {
-                            user: process.env.EMAIL_USER,
-                            pass: process.env.EMAIL_PASSWORD,
-                        },
-                    });
+            connection.on('error', (err) => {
+                console.error('RabbitMQ connection error in Mail Service:', err);
+            });
 
-                    // Email options
-                    const mailOptions = {
-                        from: "PING",
-                        to: to,
-                        subject: subject,
-                        text: body,
-                    };
+            connection.on('close', () => {
+                console.error('RabbitMQ connection closed in Mail Service');
+            });
 
-                    // Send the email
-                    await transporter.sendMail(mailOptions);
-                    console.log(`OTP email sent to ${to}`);
+            channel.consume(queueName, async (msg) => {
+                if (msg) {
+                    try {
+                        const { to, subject, body } = JSON.parse(msg.content.toString());
 
-                    // Acknowledge the message
-                    channel.ack(msg);
-                } catch (error) {
-                    console.error('Failed to send email:', error);
+                        // Configure your email transporter (using Gmail as an example)
+                        const transporter = nodemailer.createTransport({
+                            service: 'gmail',
+                            auth: {
+                                user: process.env.EMAIL_USER,
+                                pass: process.env.EMAIL_PASSWORD,
+                            },
+                        });
+
+                        // Email options
+                        const mailOptions = {
+                            from: "PING",
+                            to: to,
+                            subject: subject,
+                            text: body,
+                        };
+
+                        // Send the email
+                        await transporter.sendMail(mailOptions);
+                        console.log(`OTP email sent to ${to}`);
+
+                        // Acknowledge the message
+                        channel.ack(msg);
+                    } catch (error) {
+                        console.error('Failed to send email:', error);
+                    }
                 }
+            });
+
+            return; // Successfully connected and started consumer, exit the retry loop
+        } catch (error) {
+            console.error(
+                `Failed to start send OTP consumer (Attempt ${attempt}):`,
+                error
+            );
+
+            if (attempt === maxRetries) {
+                throw error;
             }
-        });
-    } catch (error) {
-        console.error('Failed to start send OTP consumer:', error);
-        throw error;
+
+            console.log(`Retrying in ${retryDelay / 1000} seconds...`);
+
+            await new Promise((resolve) =>
+                setTimeout(resolve, retryDelay)
+            );
+        }
     }
 }
